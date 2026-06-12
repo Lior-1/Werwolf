@@ -1,0 +1,1434 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <!-- ======================================================================= -->
+    <!-- META INFORMATION                                                        -->
+    <!-- ======================================================================= -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Eine interaktive Web-Anwendung zur Verwaltung eines Werwolf-Spiels, entwickelt als kollaboratives Projekt.">
+    <meta name="author" content="Lior">
+
+    <title>Werwolf Spielleiter-Tool</title>
+
+    <!-- ======================================================================= -->
+    <!-- EXTERNAL LIBRARIES & FONTS                                              -->
+    <!-- ======================================================================= -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+
+    <!-- ======================================================================= -->
+    <!-- CUSTOM STYLES                                                           -->
+    <!-- ======================================================================= -->
+    <style>
+        /* ======================================================================= */
+        /* ALLGEMEINE STILE & BODY                                                 */
+        /* ======================================================================= */
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Ein dunkler, leicht texturierter Hintergrund für mehr Atmosphäre */
+            background-color: #0f172a; /* Slate 900 */
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%231e293b' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            color: #cbd5e1; /* Slate 300 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ======================================================================= */
+        /* HAUPTCONTAINER                                                          */
+        /* ======================================================================= */
+        .container {
+            background-color: rgba(30, 41, 59, 0.8); /* Slate 800 mit Transparenz */
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 1.5rem;
+            border: 1px solid rgba(55, 65, 81, 0.5); /* Gray 700 */
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+            max-width: 900px;
+            width: 100%;
+            padding: clamp(1.5rem, 5vw, 3rem);
+            transition: all 0.3s ease-in-out;
+        }
+
+        /* ======================================================================= */
+        /* TYPOGRAPHIE                                                             */
+        /* ======================================================================= */
+        h1, h2, h3, h4 {
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        h1.text-transparent {
+            /* Ein leuchtenderer Farbverlauf für den Haupttitel */
+            background-image: linear-gradient(to right, #ef4444, #f97316, #eab308);
+        }
+
+        /* ======================================================================= */
+        /* MODALS & OVERLAYS                                                       */
+        /* ======================================================================= */
+        .modal-backdrop {
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            background-color: rgba(15, 23, 42, 0.8); /* Slate 900 mit Transparenz */
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-slide {
+            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .modal-hidden {
+            transform: translateX(100%);
+        }
+
+        #playerZoomContent {
+            border: 1px solid #4f46e5; /* Indigo 600 */
+            box-shadow: 0 0 30px rgba(79, 70, 229, 0.5);
+        }
+
+        /* ======================================================================= */
+        /* BUTTONS & INTERAKTIVE ELEMENTE                                          */
+        /* ======================================================================= */
+        button, .button {
+            transition: all 0.2s ease-in-out;
+            border-radius: 0.5rem;
+            font-weight: 600;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        /* Spezifische Button-Stile */
+        .bg-green-600 { background-color: #16a34a; }
+        .bg-green-600:hover { background-color: #15803d; }
+
+        .bg-red-700 { background-color: #b91c1c; }
+        .bg-red-700:hover { background-color: #991b1b; }
+
+        .bg-purple-600 { background-color: #9333ea; }
+        .bg-purple-600:hover { background-color: #7e22ce; }
+
+        .bg-gray-600 { background-color: #4b5563; }
+        .bg-gray-600:hover { background-color: #374151; }
+
+        /* ======================================================================= */
+        /* SPIELERKARTEN & STATUS                                                  */
+        /* ======================================================================= */
+        .player-card {
+            position: relative;
+            padding-bottom: 4rem; /* Platz für die Abstimmungsknöpfe */
+            border-width: 2px;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .player-card:hover {
+            transform: scale(1.05);
+            border-color: #a78bfa; /* Violet 400 */
+        }
+
+        /* Abstimmungsknöpfe auf den Karten */
+        .day-vote-controls {
+            position: absolute;
+            bottom: 0.75rem;
+            left: 0;
+            right: 0;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .player-card:hover .day-vote-controls {
+            opacity: 1;
+        }
+
+        .day-vote-controls button {
+            width: 2.25rem;
+            height: 2.25rem;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: white;
+        }
+
+        /* ======================================================================= */
+        /* FORMULARELEMENTE                                                        */
+        /* ======================================================================= */
+        input[type="text"], select {
+            background-color: #374151; /* Gray 700 */
+            border: 1px solid #4b5563; /* Gray 600 */
+            color: #f3f4f6; /* Gray 100 */
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            transition: all 0.2s ease-in-out;
+        }
+
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: #6366f1; /* Indigo 500 */
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.4);
+        }
+
+        /* ======================================================================= */
+        /* ANIMATIONEN                                                             */
+        /* ======================================================================= */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        section {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        /* ======================================================================= */
+        /* RESPONSIVE DESIGN (MOBILE)                                              */
+        /* ======================================================================= */
+        @media (max-width: 768px) {
+            body {
+                padding: 0.5rem;
+            }
+
+            .container {
+                padding: 1.5rem;
+            }
+
+            /* Reduziert die Hauptüberschrift auf kleineren Bildschirmen */
+            h1 {
+                font-size: 2.5rem; /* Tailwind's text-4xl */
+                line-height: 2.75rem;
+            }
+            
+            h2 {
+                font-size: 1.5rem; /* Tailwind's text-2xl */
+            }
+
+            /* Die Spielerkarten werden durch Tailwind-Klassen im HTML gesteuert (z.B. grid-cols-2 md:grid-cols-3) */
+            /* Dies stellt sicher, dass sie sich an den Bildschirm anpassen. */
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 2rem; /* Tailwind's text-3xl */
+                line-height: 2.25rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            /* Hinweis: Für eine einspaltige Ansicht der Spielerkarten auf sehr kleinen Bildschirmen, 
+               müssten die Tailwind-Klassen in der HTML-Datei angepasst werden (z.B. von `grid-cols-2` zu `grid-cols-1`). */
+        }
+    </style>
+</head>
+
+<body class="selection:bg-indigo-500 selection:text-white">
+
+    <main class="container">
+        
+        <section id="splashScreen" class="text-center">
+            <h1 class="text-7xl md:text-8xl font-extrabold text-center mb-4 text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-gray-400">
+                Werwolf
+            </h1>
+            <p class="text-xl text-gray-400 mb-12">Made By Lior</p>
+            <button id="splashStartBtn" class="w-full max-w-xs mx-auto bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg text-2xl">Start</button>
+        </section>
+
+        <section id="startMenu" class="hidden space-y-8">
+             <div class="mb-6" role="region" aria-labelledby="player-count-label">
+                <label id="player-count-label" class="block text-lg font-semibold mb-3 text-center">Anzahl der Spieler:</label>
+                <div class="flex items-center justify-center player-count-control bg-gray-800 border border-gray-700 rounded-lg p-2 max-w-xs mx-auto">
+                     <button id="decreasePlayerCount" aria-label="Spieleranzahl verringern" class="bg-gray-600 hover:bg-gray-500 text-white font-bold rounded-full flex items-center justify-center text-2xl">-</button>
+                     <span id="playerCountDisplay" class="text-white text-3xl font-bold text-center mx-4 player-count-display" aria-live="polite">6</span>
+                     <button id="increasePlayerCount" aria-label="Spieleranzahl erhöhen" class="bg-gray-600 hover:bg-gray-500 text-white font-bold rounded-full flex items-center justify-center text-2xl">+</button>
+                </div>
+                <p id="playerCountError" class="text-red-400 text-sm mt-2 text-center hidden" role="alert">Die Spieleranzahl muss mindestens 4 sein.</p>
+                <p id="roleCountMismatchError" class="text-red-400 text-sm mt-2 text-center hidden" role="alert">Die Gesamtzahl der Rollen muss der Spieleranzahl entsprechen.</p>
+            </div>
+            <div class="mb-6" role="region" aria-labelledby="roles-management-label">
+                <h2 id="roles-management-label" class="text-2xl font-bold mb-4 text-indigo-300 text-center">Rollen verwalten</h2>
+                <div class="bg-gray-800 border border-gray-700 p-4 rounded-lg">
+                    <h3 class="text-xl font-semibold mb-3 text-gray-200">Standardrollen</h3>
+                    <div id="defaultRoles" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                </div>
+            </div>
+            <div class="pt-4 border-t border-gray-700 space-y-4">
+                <button id="startGameBtn" class="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 px-6 rounded-lg text-lg">Spiel starten</button>
+                <button id="advancedSettingsBtn" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-lg">Erweiterte Einstellungen</button>
+            </div>
+        </section>
+
+        <section id="playerInputAndRoleReveal" class="hidden text-center">
+             <h2 class="text-3xl font-bold mb-6 text-indigo-400" id="currentPhaseTitle" aria-live="polite"></h2>
+             <div id="nameInputSection">
+                <input type="text" id="currentPlayerNameInput" placeholder="Dein Name" class="w-full p-4 rounded-lg bg-gray-700 border border-gray-600 text-white mb-4 text-lg" />
+                <p id="currentPlayerNameError" class="text-red-400 text-sm mt-1 hidden" role="alert">Bitte gib einen Namen ein.</p>
+                <button id="submitCurrentPlayerNameBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-lg">Namen bestätigen</button>
+            </div>
+            <div id="roleRevealSection" class="hidden">
+                <p id="revealedRolePlayerName" class="text-2xl mb-4 font-semibold"></p>
+                <p id="revealedRoleName" class="text-6xl font-extrabold text-white mb-8"></p>
+                <p id="revealedRoleDescription" class="text-lg text-gray-300 mb-8 max-w-md mx-auto"></p>
+                <button id="roleSeenBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg">Gesehen & weitergeben</button>
+            </div>
+        </section>
+
+        <section id="narratorView" class="hidden">
+            <div class="flex justify-between items-center mb-2">
+                 <button id="adminMenuBtn" aria-label="Admin Menü öffnen" class="bg-gray-700 hover:bg-gray-600 text-white p-3 rounded-full shadow-lg"><i class="fas fa-user-shield"></i></button>
+                 <h2 class="text-3xl font-bold text-indigo-400">Erzähler Ansicht</h2>
+                 <button id="showRolesSummaryBtn" aria-label="Rollenübersicht anzeigen" class="bg-gray-700 hover:bg-gray-600 text-white p-3 rounded-full shadow-lg"><i class="fas fa-users"></i></button>
+            </div>
+            <p class="text-xl font-bold mb-4 text-center text-gray-300 min-h-[56px]" id="narratorText" aria-live="polite">Willkommen, Erzähler!</p>
+            <div id="gameLogWrapper">
+                <div role="log" aria-live="polite" id="gameLog" class="bg-gray-800 p-4 rounded-lg h-64 overflow-y-auto mb-6 text-sm text-gray-400 border border-gray-700"></div>
+            </div>
+            <div id="playerStatus" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6" aria-label="Spielerstatus"></div>
+            <div id="narratorControls" class="flex flex-wrap gap-4 justify-center">
+                <button id="startNightBtn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-5 rounded-lg text-lg">Nacht beginnen</button>
+                <button id="nextStepBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-5 rounded-lg text-lg hidden">Weiter</button>
+                <button id="startDayBtn" class="bg-yellow-400 hover:bg-yellow-500 hidden text-gray-900 font-bold py-3 px-5 rounded-lg text-lg">Tag beginnen</button>
+                <div id="dayPhaseControls" class="hidden flex flex-wrap gap-4 justify-center w-full">
+                    <button id="executeVoteBtn" class="bg-red-700 hover:bg-red-800 text-white font-bold py-3 px-5 rounded-lg">Meiste Stimmen: Hinrichten</button>
+                    <button id="handleTieBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-5 rounded-lg">Bei Gleichstand: Neuwahl</button>
+                    <button id="forceNightBtn" class="bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-3 px-5 rounded-lg">Nacht einleiten</button>
+                </div>
+                 <button id="backToMenuBtn" class="hidden bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-5 rounded-lg">Zurück zum Menü</button>
+            </div>
+            <div id="narratorActionPanel" class="bg-gray-800 border border-gray-700 p-4 rounded-lg mt-6 hidden">
+                <h3 class="text-xl font-semibold mb-2 text-indigo-300 text-center" id="currentNarratorAction"></h3>
+                <p id="action-prompt" class="text-center text-gray-300 mb-4"></p>
+                <div id="narratorPlayerSelection" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+                <div class="flex justify-end mt-4">
+                    <button id="confirmNarratorActionBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg hidden disabled:opacity-50 disabled:cursor-not-allowed">Bestätigen</button>
+                    <button id="cancelNarratorActionBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg ml-2 hidden">Abbrechen</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="rolesSummaryModal" class="fixed inset-0 hidden modal-backdrop"><div class="bg-gray-800 p-6 rounded-lg max-w-lg w-full text-white relative border border-gray-700"><h3 class="text-2xl font-bold mb-4 text-indigo-300">Rollenübersicht</h3><button id="closeSummaryModalBtn" class="absolute top-3 right-3 text-gray-400 text-3xl">&times;</button><div id="assignedRolesList" class="space-y-2"></div></div></div>
+    <div id="roleInfoModal" class="fixed inset-0 hidden modal-backdrop"><div class="bg-gray-800 p-6 rounded-lg max-w-lg w-full text-white relative border border-gray-700"><h3 id="infoRoleName" class="text-2xl font-bold mb-4 text-indigo-300"></h3><p id="infoRoleDescription" class="mb-4 text-gray-200"></p><button id="closeInfoModalBtn" class="absolute top-3 right-3 text-gray-400 text-3xl">&times;</button></div></div>
+    <div id="playerZoomModal" class="fixed inset-0 hidden modal-backdrop"><div id="playerZoomContent" class="bg-gray-800 p-8 rounded-lg max-w-xl w-full text-white relative text-center transform scale-95 border border-gray-700"></div></div>
+    
+    <div id="advancedSettingsModal" class="fixed inset-0 p-0 hidden modal-backdrop" style="pointer-events: none;">
+        <div id="advancedSettingsPanel" class="modal-slide modal-hidden bg-gray-800 h-full max-w-md w-full ml-auto text-white overflow-y-auto border-l border-gray-700" style="pointer-events: auto;">
+            <div class="p-6 space-y-6">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-2xl font-bold text-indigo-300">Erweiterte Einstellungen</h3>
+                    <button id="closeAdvancedSettingsModalBtn" aria-label="Schließen" class="text-gray-400 hover:text-white text-3xl">&times;</button>
+                </div>
+                <div class="bg-gray-900/50 p-4 rounded-lg">
+                    <h4 class="text-xl font-semibold text-gray-200 mb-4">Nachtaufwachreihenfolge</h4>
+                    <div id="nightWakeUpOrderList" class="bg-gray-800 p-3 rounded-lg min-h-[150px] space-y-2 border border-gray-700"></div>
+                     <div class="flex justify-between items-center mt-3">
+                        <button id="resetOrderBtn" class="text-sm bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded-md">Zurücksetzen</button>
+                        <div>
+                            <button id="editOrderBtn" class="text-sm bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded-md">Bearbeiten</button>
+                            <button id="saveOrderBtn" class="text-sm bg-green-600 hover:bg-green-700 px-3 py-1 rounded-md hidden">Speichern</button>
+                        </div>
+                    </div>
+                </div>
+                 <div class="bg-gray-900/50 p-4 rounded-lg">
+                    <h4 class="text-xl font-semibold mb-3 text-gray-200">Tränke der Hexe</h4>
+                     <div class="flex items-center justify-between"><label class="text-gray-300">Heiltränke</label><div class="flex items-center player-count-control"><button id="decreaseHealPotions" class="bg-gray-600 text-white rounded-full">-</button><span id="healPotionCount" class="text-xl mx-4">1</span><button id="increaseHealPotions" class="bg-gray-600 text-white rounded-full">+</button></div></div>
+                     <div class="flex items-center justify-between mt-2"><label class="text-gray-300">Gifttränke</label><div class="flex items-center player-count-control"><button id="decreaseKillPotions" class="bg-gray-600 text-white rounded-full">-</button><span id="killPotionCount" class="text-xl mx-4">1</span><button id="increaseKillPotions" class="bg-gray-600 text-white rounded-full">+</button></div></div>
+                </div>
+                <div class="bg-gray-900/50 p-4 rounded-lg">
+                    <h4 class="text-xl font-semibold mb-3 text-gray-200">Fähigkeit des Jägers</h4>
+                     <div class="flex items-center justify-between"><label class="text-gray-300">Anzahl der "Mitreiß-Aktionen"</label><div class="flex items-center player-count-control"><button id="decreaseHunterUses" class="bg-gray-600 text-white rounded-full">-</button><span id="hunterUsesCount" class="text-xl mx-4">1</span><button id="increaseHunterUses" class="bg-gray-600 text-white rounded-full">+</button></div></div>
+                </div>
+                <div class="bg-gray-900/50 p-4 rounded-lg">
+                    <h4 class="text-xl font-semibold mb-3 text-gray-200">Anzeige</h4>
+                     <div class="flex items-center justify-between"><label for="hideConsoleToggleInput" class="text-gray-300">Konsole anzeigen</label><label class="form-switch"><input type="checkbox" id="hideConsoleToggleInput" checked><span class="slider"></span></label></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="adminPanelModal" class="fixed inset-0 hidden modal-backdrop flex items-center justify-center p-4">
+        <div class="bg-gray-800 p-6 rounded-lg max-w-lg w-full text-white relative border border-gray-700">
+             <div class="flex justify-between items-center"><h3 class="text-2xl font-bold text-indigo-300">Admin Panel</h3><button id="closeAdminPanelBtn" class="text-3xl">&times;</button></div>
+             <div id="adminPlayerList" class="mt-4 space-y-2 max-h-96 overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <div id="gameOverModal" class="fixed inset-0 hidden modal-backdrop flex-col items-center justify-center">
+        <div class="text-center text-white">
+            <h2 id="winningTeamText" class="text-7xl font-extrabold mb-8"></h2>
+            <div class="flex flex-wrap justify-center gap-4">
+                <button id="newRoundBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-8 rounded-lg text-2xl">Neue Runde</button>
+                <button id="reviewLastGameBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 px-8 rounded-lg text-2xl">Zum alten Spiel</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="module">
+        // =======================================================================
+        // MODULE: GLOBAL STATE & CONFIGURATION
+        // =======================================================================
+        let players = [];
+        let gameConfig = {};
+        let gameState = {
+            isGameActive: false,
+            currentNight: 0,
+            currentPlayerConfigIndex: 0,
+            currentNightRoleIndex: 0,
+            currentPhase: 'setup', // 'setup', 'night', 'day-revenge', 'day-voting'
+            specialAbilitiesDisabled: false,
+            pendingDaybreakActions: [], // { type: 'Jäger'/'Ritter', victimId: 'player-id' }
+        };
+        let narratorState = {
+            selectedPlayers: [],
+            actionType: null,
+            markedForDeathIds: [],
+            lastProtected: null,
+            votes: {},
+        };
+        let lastGameState = null;
+
+        const MIN_PLAYERS = 4;
+        const MAX_PLAYERS = 99; // Effectively unlimited
+        const DEFAULT_PLAYER_COUNT = 6;
+        const DEFAULT_NIGHT_ORDER_NIGHT1 = ['Amor', 'Beschützer', 'Seherin', 'Schwester', 'Bruder', 'Werwolf', 'α-Werwolf', 'Hexe'];
+        const DEFAULT_NIGHT_ORDER_OTHERS = ['Beschützer', 'Seherin', 'Werwolf', 'α-Werwolf', 'Hexe'];
+        
+        let defaultGameRoles = [
+            { name: 'Werwolf', wakesUp: true, description: 'Fressen jede Nacht einen Dorfbewohner.', maxCount: 10 }, 
+            { name: 'α-Werwolf', wakesUp: true, description: 'Gehört zu den Werwölfen, wacht aber nach ihnen nochmal alleine auf, um eine zweite Person zu töten.', maxCount: 1 },
+            { name: 'Dorfbewohner', wakesUp: false, description: 'Versuchen, die Werwölfe zu enttarnen.', maxCount: 99 },
+            { name: 'Seherin', wakesUp: true, description: 'Kann jede Nacht die Rolle eines Spielers erfahren.', maxCount: 1 },
+            { name: 'Hexe', wakesUp: true, description: 'Besitzt eine konfigurierbare Anzahl an Heil- und Gifttränken.', maxCount: 1, healPotions: 1, killPotions: 1 },
+            { name: 'Amor', wakesUp: true, description: 'Verliebt in der ersten Nacht zwei Spieler.', maxCount: 1 },
+            { name: 'Beschützer', wakesUp: true, description: 'Schützt jede Nacht eine Person.', maxCount: 1 },
+            { name: 'Bruder', wakesUp: true, description: 'Erkennt eure Brüder in der ersten Nacht.', maxCount: 1 },
+            { name: 'Schwester', wakesUp: true, description: 'Erkennt eure Schwestern in der ersten Nacht.', maxCount: 1 },
+            { name: 'Alter Mann', wakesUp: false, description: 'Überlebt den ersten Werwolf-Angriff. Stirbt er durchs Dorf, verlieren alle ihre Fähigkeiten für eine Nacht.', maxCount: 1, lives: 2 },
+            { name: 'Dorfdepp', wakesUp: false, description: 'Kann nicht vom Dorf rausgewählt werden. Wird er gewählt, outet er sich und bleibt im Spiel.', maxCount: 99 },
+            { name: 'Hybrid', wakesUp: false, description: 'Startet als Dorfbewohner. Wird er von Werwölfen angegriffen, wird er selbst zum Werwolf.', maxCount: 1 },
+            { name: 'Ritter mit der rostigen Klinge', wakesUp: false, description: 'Stirbt er, nimmt er den Werwolf links neben sich mit in den Tod.', maxCount: 99 },
+            { name: 'Jäger', wakesUp: false, description: 'Stirbt er, kann er eine beliebige Person mit in den Tod reißen.', maxCount: 1, uses: 1 },
+        ];
+        
+        // =======================================================================
+        // MODULE: DOM ELEMENT MANAGER
+        // =======================================================================
+        const D = document;
+        const get = (id) => D.getElementById(id);
+        let UIElements;
+
+        function initializeDOMElements() {
+            UIElements = {
+                splashScreen: get('splashScreen'), splashStartBtn: get('splashStartBtn'),
+                startMenu: get('startMenu'), narratorView: get('narratorView'), playerInputAndRoleReveal: get('playerInputAndRoleReveal'),
+                playerCountDisplay: get('playerCountDisplay'), decreasePlayerCount: get('decreasePlayerCount'), increasePlayerCount: get('increasePlayerCount'),
+                playerCountError: get('playerCountError'), roleCountMismatchError: get('roleCountMismatchError'), defaultRoles: get('defaultRoles'),
+                startGameBtn: get('startGameBtn'), advancedSettingsBtn: get('advancedSettingsBtn'), currentPhaseTitle: get('currentPhaseTitle'),
+                nameInputSection: get('nameInputSection'), currentPlayerNameInput: get('currentPlayerNameInput'), currentPlayerNameError: get('currentPlayerNameError'),
+                submitCurrentPlayerNameBtn: get('submitCurrentPlayerNameBtn'), roleRevealSection: get('roleRevealSection'), revealedRolePlayerName: get('revealedRolePlayerName'),
+                revealedRoleName: get('revealedRoleName'), revealedRoleDescription: get('revealedRoleDescription'), roleSeenBtn: get('roleSeenBtn'),
+                showRolesSummaryBtn: get('showRolesSummaryBtn'), narratorText: get('narratorText'), gameLog: get('gameLog'), gameLogWrapper: get('gameLogWrapper'),
+                playerStatus: get('playerStatus'), startNightBtn: get('startNightBtn'), startDayBtn: get('startDayBtn'), nextStepBtn: get('nextStepBtn'),
+                narratorActionPanel: get('narratorActionPanel'), currentNarratorAction: get('currentNarratorAction'), actionPrompt: get('action-prompt'), narratorPlayerSelection: get('narratorPlayerSelection'),
+                confirmNarratorActionBtn: get('confirmNarratorActionBtn'), cancelNarratorActionBtn: get('cancelNarratorActionBtn'),
+                rolesSummaryModal: get('rolesSummaryModal'), closeSummaryModalBtn: get('closeSummaryModalBtn'), assignedRolesList: get('assignedRolesList'),
+                roleInfoModal: get('roleInfoModal'), infoRoleName: get('infoRoleName'), infoRoleDescription: get('infoRoleDescription'), closeInfoModalBtn: get('closeInfoModalBtn'),
+                playerZoomModal: get('playerZoomModal'), playerZoomContent: get('playerZoomContent'), 
+                advancedSettingsModal: get('advancedSettingsModal'),
+                closeAdvancedSettingsModalBtn: get('closeAdvancedSettingsModalBtn'), advancedSettingsPanel: get('advancedSettingsPanel'),
+                nightWakeUpOrderList: get('nightWakeUpOrderList'),
+                healPotionCount: get('healPotionCount'), killPotionCount: get('killPotionCount'),
+                decreaseHealPotions: get('decreaseHealPotions'), increaseHealPotions: get('increaseHealPotions'),
+                decreaseKillPotions: get('decreaseKillPotions'), increaseKillPotions: get('increaseKillPotions'),
+                hunterUsesCount: get('hunterUsesCount'), decreaseHunterUses: get('decreaseHunterUses'), increaseHunterUses: get('increaseHunterUses'),
+                editOrderBtn: get('editOrderBtn'), saveOrderBtn: get('saveOrderBtn'),
+                resetOrderBtn: get('resetOrderBtn'), 
+                adminMenuBtn: get('adminMenuBtn'), adminPanelModal: get('adminPanelModal'),
+                closeAdminPanelBtn: get('closeAdminPanelBtn'), adminPlayerList: get('adminPlayerList'),
+                dayPhaseControls: get('dayPhaseControls'), executeVoteBtn: get('executeVoteBtn'),
+                handleTieBtn: get('handleTieBtn'), forceNightBtn: get('forceNightBtn'),
+                gameOverModal: get('gameOverModal'), winningTeamText: get('winningTeamText'),
+                newRoundBtn: get('newRoundBtn'),
+                reviewLastGameBtn: get('reviewLastGameBtn'),
+                narratorControls: get('narratorControls'),
+                backToMenuBtn: get('backToMenuBtn'),
+                hideConsoleToggleInput: get('hideConsoleToggleInput'),
+            };
+        }
+        
+        // =======================================================================
+        // MODULE: UI MANAGER
+        // =======================================================================
+        const UIManager = {
+            updatePlayerCountDisplay() { UIElements.playerCountDisplay.textContent = gameConfig.playerCount || DEFAULT_PLAYER_COUNT; },
+            
+            updateConfigErrors() {
+                const playerCount = gameConfig.playerCount || 0;
+                const totalRoles = gameConfig.selectedRoles?.reduce((sum, r) => sum + r.count, 0) || 0;
+                const playerCountError = playerCount < MIN_PLAYERS;
+                const roleCountError = playerCount !== totalRoles;
+                UIElements.playerCountError.classList.toggle('hidden', !playerCountError);
+                UIElements.roleCountMismatchError.classList.toggle('hidden', !roleCountError || playerCount === 0);
+            },
+            
+            updateStartButtonState() {
+                const playerCount = gameConfig.playerCount || 0;
+                const totalRoles = gameConfig.selectedRoles?.reduce((sum, r) => sum + r.count, 0) || 0;
+                const hasWerwolf = gameConfig.selectedRoles?.some(r => r.name.includes('Werwolf') && r.count > 0);
+                const canStart = playerCount >= MIN_PLAYERS && playerCount <= MAX_PLAYERS && playerCount === totalRoles && hasWerwolf;
+                UIElements.startGameBtn.disabled = !canStart;
+                UIElements.startGameBtn.classList.toggle('opacity-50', !canStart);
+                UIElements.startGameBtn.classList.toggle('cursor-not-allowed', !canStart);
+            },
+
+            renderDefaultRoles() {
+                UIElements.defaultRoles.innerHTML = defaultGameRoles.map(role => this.createRoleHTML(role)).join('');
+                this.addRoleEventListeners(UIElements.defaultRoles);
+            },
+            
+            createRoleHTML(role) {
+                const count = gameConfig.selectedRoles?.find(r => r.name === role.name)?.count || 0;
+                const idAttr = `data-role-name="${role.name}"`;
+                const countId = `role-count-${role.name.replace(/\s/g, '')}`;
+                return `
+                <div class="relative flex items-center bg-gray-900/50 p-2 rounded-lg shadow-sm">
+                    <button class="info-icon mr-2 text-indigo-400 hover:text-indigo-200" ${idAttr} aria-label="Info zu ${role.name}"><svg class="h-5 w-5 pointer-events-none" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg></button>
+                    <label for="${countId}" class="flex-grow text-gray-200">${role.name}</label>
+                    <div class="flex items-center">
+                        <button class="role-count-btn bg-gray-600 hover:bg-gray-500 text-white w-7 h-7 rounded-full flex items-center justify-center font-bold" ${idAttr} data-action="decrease">-</button>
+                        <span id="${countId}" class="w-10 text-center mx-1">${count}</span>
+                        <button class="role-count-btn bg-gray-600 hover:bg-gray-500 text-white w-7 h-7 rounded-full flex items-center justify-center font-bold" ${idAttr} data-action="increase">+</button>
+                    </div>
+                </div>`;
+            },
+            
+            addRoleEventListeners(container) {
+                container.querySelectorAll('.role-count-btn').forEach(btn => btn.addEventListener('click', GameLogic.handleRoleCountChange.bind(GameLogic)));
+                container.querySelectorAll('.info-icon').forEach(btn => btn.addEventListener('click', this.showRoleInfoModal.bind(this)));
+            },
+
+            showRoleInfoModal(event) {
+                const roleName = event.currentTarget.dataset.roleName;
+                const role = defaultGameRoles.find(r => r.name === roleName);
+                if (role) {
+                    UIElements.infoRoleName.textContent = role.name;
+                    UIElements.infoRoleDescription.textContent = role.description;
+                    this.toggleModal(UIElements.roleInfoModal, true);
+                }
+            },
+
+            toggleModal(modalElement, show) {
+                 if (modalElement.id === 'advancedSettingsModal') {
+                    if (show) {
+                        modalElement.classList.remove('hidden');
+                        setTimeout(() => {
+                            UIElements.advancedSettingsPanel.classList.remove('modal-hidden');
+                        }, 10);
+                    } else {
+                        UIElements.advancedSettingsPanel.classList.add('modal-hidden');
+                        setTimeout(() => {
+                           modalElement.classList.add('hidden');
+                        }, 400);
+                    }
+                } else {
+                    modalElement.classList.toggle('hidden', !show);
+                }
+            },
+            
+            renderPlayerStatus(playerList = players, isReview = false) {
+                const currentPlayers = playerList;
+                const witch = currentPlayers.find(p => p.role.name === 'Hexe');
+                UIElements.playerStatus.innerHTML = currentPlayers.sort((a,b) => a.name.localeCompare(b.name)).map(player => {
+                    const isDead = !player.isAlive;
+                    let borderColor = 'border-gray-700/50';
+                    let extraClasses = '';
+
+                    if (isDead) {
+                        borderColor = 'border-red-700';
+                        extraClasses = 'opacity-50 bg-red-900/30 cursor-not-allowed';
+                    } else if (!isReview && narratorState.markedForDeathIds.includes(player.id)) {
+                        borderColor = 'border-orange-500';
+                    } else if (player.isProtected) {
+                        borderColor = 'border-blue-500';
+                    } else {
+                        borderColor = 'border-green-500/50';
+                    }
+                    
+                    const voteCount = narratorState.votes[player.id] || 0;
+                    const isVoting = !isReview && gameState.currentPhase === 'day-voting' && player.isAlive;
+
+                    return `
+                    <div id="player-card-${player.id}" class="player-card bg-gray-900/50 p-3 rounded-lg text-center relative group border-2 ${borderColor} ${extraClasses} transition-all duration-300">
+                        <div class="cursor-pointer" data-action="show-details" data-player-id="${player.id}">
+                            <p class="font-semibold text-lg pointer-events-none">${player.name}</p>
+                            <p class="text-sm text-gray-400 pointer-events-none">${player.role.name}</p>
+                            ${player.isLoved ? '<p class="text-xs text-pink-400 font-semibold pointer-events-none">Verliebt</p>' : ''}
+                            ${player.isProtected ? '<p class="text-xs text-blue-400 font-semibold pointer-events-none">Beschützt</p>' : ''}
+                            ${player.role.name === 'Hexe' && player.isAlive && witch ? `<p class="text-xs text-gray-300 mt-1 pointer-events-none">❤️${witch.role.healPotions} ☠️${witch.role.killPotions}</p>` : ''}
+                        </div>
+                        ${isVoting ? `
+                        <div class="absolute inset-x-0 bottom-2 flex justify-center items-center gap-2 day-vote-controls">
+                            <button data-vote-action="minus" data-player-id="${player.id}" class="bg-red-600 hover:bg-red-700 rounded-full w-8 h-8 flex items-center justify-center font-bold text-lg">-</button>
+                            <span class="text-xl font-bold w-8 text-center">${voteCount}</span>
+                            <button data-vote-action="plus" data-player-id="${player.id}" class="bg-green-600 hover:bg-green-700 rounded-full w-8 h-8 flex items-center justify-center font-bold text-lg">+</button>
+                        </div>` : ''}
+                    </div>`
+                }).join('');
+            },
+
+            showPlayerZoomModal(player) {
+                const witch = players.find(p => p.role.name === 'Hexe');
+                UIElements.playerZoomContent.innerHTML = `
+                   <button id="closeZoomBtn" class="absolute top-3 right-4 text-gray-400 hover:text-gray-200 text-4xl font-bold">&times;</button>
+                   <p id="zoom-modal-title" class="font-extrabold text-5xl mb-3">${player.name}</p>
+                   <p class="text-3xl text-indigo-300 mb-6">${player.role.name}</p>
+                   <div class="space-y-3 text-left text-lg">
+                       <p><span class="font-semibold">Status:</span> ${player.isAlive ? 'Lebt' : 'Tot'}</p>
+                       ${player.isLoved ? '<p><span class="font-semibold">Status:</span> <span class="text-pink-400">Verliebt</span></p>' : ''}
+                       ${player.isProtected ? '<p><span class="font-semibold">Status:</span> <span class="text-blue-400">Beschützt</span></p>' : ''}
+                       ${player.role.name === 'Hexe' && witch ? `<p><span class="font-semibold">Tränke:</span> Heiltrank (${witch.role.healPotions}), Gifttrank (${witch.role.killPotions})</p>` : ''}
+                   </div>
+               `;
+               this.toggleModal(UIElements.playerZoomModal, true);
+               get('closeZoomBtn').addEventListener('click', () => this.toggleModal(UIElements.playerZoomModal, false), { once: true });
+            },
+            
+            showSeerRevealModal(player, callback) {
+                UIElements.playerZoomContent.innerHTML = `
+                   <button id="closeZoomBtn" class="absolute top-3 right-4 text-gray-400 hover:text-gray-200 text-4xl font-bold">&times;</button>
+                   <p id="zoom-modal-title" class="font-extrabold text-5xl mb-3">${player.name}</p>
+                   <p class="text-3xl text-indigo-300 mb-4">${player.role.name}</p>
+                   <p class="text-xl text-gray-300 mt-4">Das ist die Rolle von ${player.name}.</p>
+                `;
+               this.toggleModal(UIElements.playerZoomModal, true);
+               get('closeZoomBtn').addEventListener('click', () => {
+                   this.toggleModal(UIElements.playerZoomModal, false);
+                   if(callback) callback();
+                }, { once: true });
+            },
+
+            renderNightWakeUpOrderList(isEditing = false) {
+                if (!gameConfig.nightWakeUpOrder || gameConfig.nightWakeUpOrder.length === 0) {
+                     GameLogic.resetNightOrder();
+                }
+                
+                UIElements.nightWakeUpOrderList.innerHTML = gameConfig.nightWakeUpOrder.map((roleName, index) => `
+                    <div class="order-item" data-index="${index}">
+                        <span class="flex items-center">
+                            <span class="mr-4 text-gray-500">${index + 1}.</span>
+                            <span>${roleName}</span>
+                        </span>
+                        <div class="order-controls flex gap-2" ${!isEditing ? 'style="display:none;"' : ''}>
+                             <button data-action="up" aria-label="Nach oben verschieben" ${index === 0 ? 'disabled' : ''}>
+                                <svg class="w-5 h-5 pointer-events-none" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"></path></svg>
+                            </button>
+                             <button data-action="down" aria-label="Nach unten verschieben" ${index === gameConfig.nightWakeUpOrder.length - 1 ? 'disabled' : ''}>
+                                <svg class="w-5 h-5 pointer-events-none" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        };
+
+        // =======================================================================
+        // MODULE: GAME LOGIC
+        // =======================================================================
+        const GameLogic = {
+            initialize() {
+                players = [];
+                gameConfig = { playerCount: DEFAULT_PLAYER_COUNT, selectedRoles: [], nightWakeUpOrder: [...DEFAULT_NIGHT_ORDER_NIGHT1] };
+                gameState = {
+                    isGameActive: false, currentNight: 0, currentPlayerConfigIndex: 0,
+                    currentNightRoleIndex: 0, currentPhase: 'setup', specialAbilitiesDisabled: false, pendingDaybreakActions: [],
+                };
+                narratorState = {
+                    selectedPlayers: [], actionType: null, markedForDeathIds: [], lastProtected: null, votes: {},
+                };
+                UIManager.updatePlayerCountDisplay();
+                UIManager.renderDefaultRoles();
+                UIManager.updateStartButtonState();
+                UIElements.gameLog.innerHTML = '';
+                UIElements.narratorText.innerHTML = 'Willkommen, Erzähler!';
+            },
+
+            changePlayerCount(amount) {
+                const currentCount = gameConfig.playerCount || DEFAULT_PLAYER_COUNT;
+                const newCount = Math.max(MIN_PLAYERS, currentCount + amount);
+                if (newCount !== gameConfig.playerCount) {
+                    gameConfig.playerCount = newCount;
+                    UIManager.updatePlayerCountDisplay();
+                    UIManager.updateConfigErrors();
+                    UIManager.updateStartButtonState();
+                }
+            },
+            
+            handleRoleCountChange(event) {
+                const button = event.currentTarget;
+                const { roleName, action } = button.dataset;
+                const role = defaultGameRoles.find(r => r.name === roleName);
+                if (!role) return;
+                
+                if (!gameConfig.selectedRoles) gameConfig.selectedRoles = [];
+                let roleConfig = gameConfig.selectedRoles.find(r => r.name === role.name);
+                let currentCount = roleConfig?.count || 0;
+                
+                if (action === 'increase') {
+                    if (currentCount < role.maxCount) currentCount++;
+                } else {
+                    if (currentCount > 0) currentCount--;
+                }
+                
+                if (roleConfig) {
+                    roleConfig.count = currentCount;
+                } else if (currentCount > 0) {
+                    gameConfig.selectedRoles.push({ name: role.name, count: currentCount });
+                }
+                
+                gameConfig.selectedRoles = gameConfig.selectedRoles.filter(r => r.count > 0);
+                
+                UIManager.renderNightWakeUpOrderList();
+                const countId = `role-count-${role.name.replace(/\s/g, '')}`;
+                get(countId).textContent = currentCount;
+
+                UIManager.updateConfigErrors();
+                UIManager.updateStartButtonState();
+            },
+
+            changeHunterUses(amount) {
+                const hunterRole = defaultGameRoles.find(r => r.name === 'Jäger');
+                hunterRole.uses = Math.max(0, (hunterRole.uses || 1) + amount);
+                UIElements.hunterUsesCount.textContent = hunterRole.uses;
+            },
+
+            changePotionCount(type, amount) {
+                const witchRole = defaultGameRoles.find(r => r.name === 'Hexe');
+                if (type === 'heal') {
+                    witchRole.healPotions = Math.max(0, witchRole.healPotions + amount);
+                    UIElements.healPotionCount.textContent = witchRole.healPotions;
+                } else if (type === 'kill') {
+                    witchRole.killPotions = Math.max(0, witchRole.killPotions + amount);
+                    UIElements.killPotionCount.textContent = witchRole.killPotions;
+                }
+            },
+            
+            startGame() {
+                UIElements.startMenu.classList.add('hidden');
+                UIElements.playerInputAndRoleReveal.classList.remove('hidden');
+                gameState.isGameActive = true;
+                gameState.currentPlayerConfigIndex = 0;
+                this.assignRoles();
+                this.proceedToNextPlayer();
+            },
+            
+            assignRoles() {
+                const hunterUses = parseInt(UIElements.hunterUsesCount.textContent) || 0;
+
+                let rolesToAssign = gameConfig.selectedRoles.flatMap(rc => {
+                    const fullRole = { ...defaultGameRoles.find(dr => dr.name === rc.name) };
+                    if (fullRole.name === 'Jäger') fullRole.uses = hunterUses;
+                    if (fullRole.name === 'Alter Mann') fullRole.lives = 2;
+                    return Array(rc.count).fill(fullRole);
+                });
+
+                for (let i = rolesToAssign.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [rolesToAssign[i], rolesToAssign[j]] = [rolesToAssign[j], rolesToAssign[i]]; }
+                players = rolesToAssign.map((role, i) => ({
+                    id: `player-${i}`, name: '', role: { ...role }, 
+                    isAlive: true, isProtected: false, isLoved: false, partnerId: null,
+                }));
+            },
+            
+            proceedToNextPlayer() {
+                if (gameState.currentPlayerConfigIndex < gameConfig.playerCount) {
+                    UIElements.roleRevealSection.classList.add('hidden');
+                    UIElements.nameInputSection.classList.remove('hidden');
+                    UIElements.currentPhaseTitle.textContent = `Spieler ${gameState.currentPlayerConfigIndex + 1}: Name eingeben`;
+                    UIElements.currentPlayerNameInput.value = '';
+                    UIElements.currentPlayerNameInput.focus();
+                } else {
+                    UIElements.playerInputAndRoleReveal.classList.add('hidden');
+                    UIElements.narratorView.classList.remove('hidden');
+                    UIManager.renderPlayerStatus();
+                }
+            },
+            
+            submitPlayerName() {
+                const name = UIElements.currentPlayerNameInput.value.trim();
+                const nameExists = players.some(p => p.name.toLowerCase() === name.toLowerCase());
+                UIElements.currentPlayerNameError.classList.toggle('hidden', !!name && !nameExists);
+                UIElements.currentPlayerNameError.textContent = !name ? 'Bitte gib einen Namen ein.' : (nameExists ? 'Dieser Name wird bereits verwendet.' : '');
+
+                if (!!name && !nameExists) {
+                    players[gameState.currentPlayerConfigIndex].name = name;
+                    this.showCurrentPlayerRole();
+                }
+            },
+            
+            showCurrentPlayerRole() {
+                const player = players[gameState.currentPlayerConfigIndex];
+                UIElements.nameInputSection.classList.add('hidden');
+                UIElements.roleRevealSection.classList.remove('hidden');
+                UIElements.currentPhaseTitle.textContent = 'Deine Rolle';
+                UIElements.revealedRolePlayerName.textContent = `${player.name}, deine Rolle ist:`;
+                UIElements.revealedRoleName.textContent = player.role.name;
+                UIElements.revealedRoleDescription.textContent = player.role.description;
+                gameState.currentPlayerConfigIndex++;
+            },
+
+            startNight() {
+                if(gameState.specialAbilitiesDisabled) {
+                    const msg = "Die Fähigkeiten der Dorfbewohner sind diese Nacht blockiert!";
+                    this.logToGame(msg, "text-yellow-400");
+                    UIElements.narratorText.innerHTML = `<strong class="text-yellow-400">${msg}</strong>`;
+                }
+                gameState.currentPhase = 'night';
+                gameState.currentNight++;
+                gameState.currentNightRoleIndex = 0;
+                narratorState.markedForDeathIds = [];
+                players.forEach(p => p.isProtected = false);
+                UIElements.startNightBtn.classList.add('hidden');
+                UIElements.dayPhaseControls.classList.add('hidden');
+                this.logToGame(`Nacht ${gameState.currentNight} beginnt.`, 'text-gray-400');
+                UIElements.narratorText.innerHTML = "Alle Spieler schlafen ein.";
+                UIManager.renderPlayerStatus();
+                this.processNightStep();
+            },
+
+            processNightStep() {
+                const nightOrder = gameState.currentNight === 1 ? gameConfig.nightWakeUpOrder : DEFAULT_NIGHT_ORDER_OTHERS.filter(r => gameConfig.nightWakeUpOrder.includes(r));
+                const activeRolesInOrder = nightOrder.filter(roleName => players.some(p => p.role.name === roleName && p.isAlive));
+
+                if (gameState.currentNightRoleIndex >= activeRolesInOrder.length) {
+                    this.endNight();
+                    return;
+                }
+
+                const roleName = activeRolesInOrder[gameState.currentNightRoleIndex];
+                if (gameState.specialAbilitiesDisabled && roleName !== 'Werwolf' && roleName !== 'α-Werwolf') {
+                    this.advanceToNextRole();
+                    return;
+                }
+
+                UIElements.narratorText.innerHTML = `<strong class="text-white">${roleName}</strong>, wache auf.`;
+                this.logToGame(`${roleName} wacht auf.`, 'text-gray-400');
+                this.setupRoleAction(roleName);
+            },
+
+            setupRoleAction(roleName) {
+                UIElements.narratorActionPanel.classList.remove('hidden');
+                narratorState.selectedPlayers = [];
+                narratorState.currentActionRole = roleName;
+                
+                const rolePlayers = players.filter(p => p.role.name === roleName && p.isAlive);
+                const rolePlayerNames = rolePlayers.map(p => p.name).join(' und ');
+                
+                UIElements.currentNarratorAction.innerHTML = `${roleName}, <strong class="text-white">${rolePlayerNames}</strong>`;
+
+                const simpleRoles = ['Bruder', 'Schwester'];
+                if(gameState.currentNight === 1 && simpleRoles.includes(roleName)) {
+                     UIElements.actionPrompt.textContent = 'Erkennt euch und schlaft wieder ein.';
+                     UIElements.narratorPlayerSelection.innerHTML = '';
+                     UIElements.nextStepBtn.classList.remove('hidden');
+                     UIElements.cancelNarratorActionBtn.classList.add('hidden');
+                     UIElements.confirmNarratorActionBtn.classList.add('hidden');
+                     return;
+                }
+
+                let prompt = "";
+                let requiredSelections = 0;
+                let showCancel = false;
+                let selectablePlayers = players.filter(p => p.isAlive);
+
+                switch(roleName) {
+                    case "Amor": prompt = "Wählt 2 Personen zum Verlieben aus."; requiredSelections = 2; break;
+                    case "Beschützer": prompt = "Suche dir einen Spieler aus, den du für diese Runde beschützen willst."; requiredSelections = 1; showCancel = true; break;
+                    case "Seherin": prompt = "Wessen Karte möchtest du sehen?"; requiredSelections = 1; break;
+                    case "Werwolf":
+                    case "α-Werwolf":
+                        prompt = "Wählt ein Opfer aus."; requiredSelections = 1;
+                        selectablePlayers = selectablePlayers.filter(p => !p.role.name.includes('Werwolf'));
+                        break;
+                    case "Hexe": this.setupWitchAction(); return;
+                    default: setTimeout(() => this.advanceToNextRole(), 1500); return;
+                }
+                UIElements.actionPrompt.textContent = prompt;
+                
+                if (roleName === 'Seherin' || roleName === 'Beschützer') {
+                    selectablePlayers = selectablePlayers.filter(p => !rolePlayers.some(rp => rp.id === p.id));
+                }
+
+                UIElements.narratorPlayerSelection.innerHTML = selectablePlayers.map(p => 
+                    `<button class="bg-gray-600 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition-colors" data-player-id="${p.id}">${p.name}</button>`
+                ).join('');
+
+                UIElements.narratorPlayerSelection.querySelectorAll('button').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const player = players.find(p => p.id === btn.dataset.playerId);
+                        if (roleName === 'Seherin') {
+                            this.logToGame(`Seherin schaut sich die Karte von ${player.name} an.`, 'text-purple-400');
+                            UIManager.showSeerRevealModal(player, () => this.advanceToNextRole());
+                            return;
+                        }
+                        this.togglePlayerSelection(player, requiredSelections);
+                    });
+                });
+
+                if (roleName !== 'Seherin') {
+                    UIElements.confirmNarratorActionBtn.disabled = true;
+                    UIElements.confirmNarratorActionBtn.classList.remove('hidden');
+                    if(showCancel) UIElements.cancelNarratorActionBtn.classList.remove('hidden');
+                }
+            },
+
+            setupWitchAction() {
+                const witch = players.find(p => p.role.name === 'Hexe' && p.isAlive);
+                UIElements.actionPrompt.textContent = 'Möchtest du einen Trank benutzen?';
+                UIElements.narratorPlayerSelection.innerHTML = `
+                    <div class="flex justify-center gap-4">
+                        <button id="healBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50" ${witch.role.healPotions > 0 && narratorState.markedForDeathIds.length > 0 ? '' : 'disabled'}>Heilen</button>
+                        <button id="killBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50" ${witch.role.killPotions > 0 ? '' : 'disabled'}>Töten</button>
+                    </div>
+                `;
+
+                if (witch.role.healPotions > 0 && narratorState.markedForDeathIds.length > 0) {
+                     get('healBtn').onclick = () => this.showWitchHealSelection();
+                }
+                if (witch.role.killPotions > 0) {
+                     get('killBtn').onclick = () => this.showWitchKillSelection();
+                }
+
+                UIElements.cancelNarratorActionBtn.textContent = "Zug beenden";
+                UIElements.cancelNarratorActionBtn.classList.remove('hidden');
+            },
+            
+            showWitchHealSelection() {
+                UIElements.actionPrompt.textContent = 'Wen möchtest du heilen?';
+                const selectable = players.filter(p => narratorState.markedForDeathIds.includes(p.id));
+                UIElements.narratorPlayerSelection.innerHTML = selectable.map(p => 
+                    `<button class="bg-gray-600 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded" data-player-id="${p.id}">${p.name}</button>`
+                ).join('');
+                UIElements.narratorPlayerSelection.querySelectorAll('button').forEach(btn => {
+                    btn.onclick = () => {
+                        const target = players.find(p => p.id === btn.dataset.playerId);
+                        this.confirmWitchAction('heal', target);
+                    };
+                });
+            },
+
+            showWitchKillSelection() {
+                UIElements.actionPrompt.textContent = 'Wen möchtest du töten?';
+                const witch = players.find(p => p.role.name === 'Hexe');
+                const selectable = players.filter(p => p.isAlive && p.id !== witch.id);
+                UIElements.narratorPlayerSelection.innerHTML = selectable.map(p => 
+                    `<button class="bg-gray-600 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded" data-player-id="${p.id}">${p.name}</button>`
+                ).join('');
+                UIElements.narratorPlayerSelection.querySelectorAll('button').forEach(btn => {
+                    btn.onclick = () => {
+                        const target = players.find(p => p.id === btn.dataset.playerId);
+                        this.confirmWitchAction('kill', target);
+                    };
+                });
+                UIElements.cancelNarratorActionBtn.textContent = "Zurück";
+                UIElements.cancelNarratorActionBtn.onclick = () => this.setupWitchAction();
+            },
+
+            confirmWitchAction(type, target) {
+                 const witch = players.find(p => p.role.name === 'Hexe');
+                 if (type === 'heal') {
+                     witch.role.healPotions--;
+                     this.logToGame(`Die Hexe hat ${target.name} gerettet!`, 'text-green-400');
+                     UIElements.narratorText.innerHTML = `Die Hexe hat <strong class="text-green-400">${target.name}</strong> gerettet!`;
+                     narratorState.markedForDeathIds = narratorState.markedForDeathIds.filter(id => id !== target.id);
+                 } else {
+                     witch.role.killPotions--;
+                     this.killPlayer(target, 'von der Hexe getötet');
+                 }
+                 UIManager.renderPlayerStatus();
+                 this.setupWitchAction();
+            },
+
+            togglePlayerSelection(player, requiredCount) {
+                const btn = UIElements.narratorPlayerSelection.querySelector(`[data-player-id="${player.id}"]`);
+                const index = narratorState.selectedPlayers.findIndex(p => p.id === player.id);
+
+                if (index > -1) {
+                    narratorState.selectedPlayers.splice(index, 1);
+                    btn.classList.remove('bg-indigo-500');
+                } else {
+                    if (narratorState.selectedPlayers.length < requiredCount) {
+                        narratorState.selectedPlayers.push(player);
+                        btn.classList.add('bg-indigo-500');
+                    } else if(requiredCount === 1) {
+                        const oldSelection = narratorState.selectedPlayers[0];
+                        const oldBtn = UIElements.narratorPlayerSelection.querySelector(`[data-player-id="${oldSelection.id}"]`);
+                        if(oldBtn) oldBtn.classList.remove('bg-indigo-500');
+                        narratorState.selectedPlayers = [player];
+                        btn.classList.add('bg-indigo-500');
+                    }
+                }
+                
+                UIElements.confirmNarratorActionBtn.disabled = (narratorState.selectedPlayers.length !== requiredCount);
+            },
+            
+            confirmRoleAction() {
+                const roleName = narratorState.currentActionRole;
+                const targets = narratorState.selectedPlayers;
+                this.logToGame(`${roleName} wählt ${targets.map(t=>t.name).join(', ')}.`, 'text-purple-400');
+                
+                switch(roleName) {
+                    case 'Amor':
+                        targets[0].isLoved = true; targets[1].isLoved = true;
+                        targets[0].partnerId = targets[1].id; targets[1].partnerId = targets[0].id;
+                        this.logToGame(`${targets[0].name} und ${targets[1].name} sind jetzt verliebt.`, 'text-pink-400');
+                        UIElements.narratorText.innerHTML = `<strong class="text-pink-400">${targets[0].name} und ${targets[1].name}</strong> sind jetzt verliebt.`;
+                        break;
+                    case 'Beschützer':
+                        targets[0].isProtected = true;
+                        this.logToGame(`${targets[0].name} wurde diese Nacht beschützt.`, 'text-blue-400');
+                        UIElements.narratorText.innerHTML = `<strong class="text-blue-400">${targets[0].name}</strong> wurde beschützt.`;
+                        break;
+                    case 'Werwolf':
+                    case 'α-Werwolf':
+                        const target = targets[0];
+                        if (target.isProtected) {
+                            this.logToGame(`Die ${roleName} haben versucht, ${target.name} zu fressen, doch er/sie wurde beschützt!`, 'text-green-400');
+                            UIElements.narratorText.innerHTML = `Die Werwölfe griffen <strong class="text-orange-400">${target.name}</strong> an, aber er/sie wurde beschützt!`;
+                        } else {
+                            narratorState.markedForDeathIds.push(target.id);
+                             this.logToGame(`Die ${roleName} haben sich für ${target.name} entschieden.`, 'text-orange-400');
+                             UIElements.narratorText.innerHTML = `<strong class="text-orange-400">${target.name}</strong> wurde als Opfer gewählt.`;
+                        }
+                        break;
+                }
+                
+                UIManager.renderPlayerStatus();
+                this.advanceToNextRole();
+            },
+            
+            killPlayer(playerToKill, cause) {
+                if (!playerToKill || !playerToKill.isAlive) return;
+
+                playerToKill.isAlive = false;
+                this.logToGame(`${playerToKill.name} ist gestorben (${cause}).`, 'text-red-500');
+                UIElements.narratorText.innerHTML = `<strong class="text-red-500">${playerToKill.name}</strong> ist gestorben!`;
+
+                if (playerToKill.isLoved && playerToKill.partnerId) {
+                    const partner = players.find(p => p.id === playerToKill.partnerId);
+                    if (partner && partner.isAlive) { this.killPlayer(partner, 'Liebeskummer'); }
+                }
+                
+                if (playerToKill.role.name === 'Jäger' && playerToKill.role.uses > 0) {
+                    gameState.pendingDaybreakActions.push({ type: 'Jäger', victimId: playerToKill.id });
+                }
+                if (playerToKill.role.name === 'Ritter mit der rostigen Klinge') {
+                    gameState.pendingDaybreakActions.push({ type: 'Ritter', victimId: playerToKill.id });
+                }
+
+                UIManager.renderPlayerStatus();
+            },
+
+            advanceToNextRole() {
+                 gameState.currentNightRoleIndex++;
+                 UIElements.narratorActionPanel.classList.add('hidden');
+                 UIElements.nextStepBtn.classList.add('hidden');
+                 UIElements.cancelNarratorActionBtn.classList.add('hidden');
+                 UIElements.confirmNarratorActionBtn.classList.add('hidden');
+                 this.processNightStep();
+            },
+            
+            resetNightOrder() {
+                gameConfig.nightWakeUpOrder = [...DEFAULT_NIGHT_ORDER_NIGHT1];
+            },
+
+            reorderNightWakeUp(index, direction) {
+                const order = gameConfig.nightWakeUpOrder;
+                if (direction === 'up' && index > 0) {
+                    [order[index], order[index - 1]] = [order[index - 1], order[index]];
+                } else if (direction === 'down' && index < order.length - 1) {
+                    [order[index], order[index + 1]] = [order[index + 1], order[index]];
+                }
+                UIManager.renderNightWakeUpOrderList(true);
+            },
+            
+            endNight() {
+                let deathAnnouncements = [];
+                const uniqueVictimIds = [...new Set(narratorState.markedForDeathIds)];
+
+                if (uniqueVictimIds.length > 0) {
+                    uniqueVictimIds.forEach(victimId => {
+                        const victim = players.find(p => p.id === victimId);
+                        if (!victim) return;
+
+                        if (victim.role.name === 'Alter Mann') {
+                            victim.role.lives--;
+                            if (victim.role.lives > 0) {
+                                this.logToGame(`${victim.name} (Alter Mann) wurde angegriffen, hat aber noch ${victim.role.lives} Leben.`, 'text-green-400');
+                                deathAnnouncements.push(`<strong class="text-green-400">${victim.name}</strong> wurde angegriffen, hat aber überlebt!`);
+                                return;
+                            }
+                        }
+                        
+                        if (victim.role.name === 'Hybrid') {
+                            victim.role.name = 'Werwolf';
+                            this.logToGame(`${victim.name} wurde angegriffen und ist jetzt ein Werwolf!`, 'text-purple-400');
+                            deathAnnouncements.push(`<strong class="text-purple-400">${victim.name}</strong> wurde verwandelt!`);
+                            UIManager.renderPlayerStatus();
+                            return;
+                        }
+
+                        this.killPlayer(victim, 'von den Werwölfen gefressen');
+                        deathAnnouncements.push(`<strong class="text-red-500">${victim.name}</strong> wurde gefressen.`);
+                    });
+                } else {
+                    deathAnnouncements.push("Niemand wurde diese Nacht gefressen.")
+                }
+                
+                UIElements.narratorText.innerHTML = deathAnnouncements.join('<br>');
+                
+                if (this.checkForWin()) return;
+                
+                gameState.specialAbilitiesDisabled = false;
+                this.processDaybreakActions();
+            },
+
+            processDaybreakActions() {
+                if (this.checkForWin()) return;
+
+                if (gameState.pendingDaybreakActions.length > 0) {
+                    const action = gameState.pendingDaybreakActions.shift();
+                    this.setupRevengeAction(action.type, action.victimId);
+                } else {
+                    UIElements.startDayBtn.classList.remove('hidden');
+                }
+            },
+            
+            setupRevengeAction(type, victimId) {
+                gameState.currentPhase = 'day-revenge';
+                UIElements.narratorActionPanel.classList.remove('hidden');
+                UIElements.confirmNarratorActionBtn.classList.add('hidden');
+                UIElements.cancelNarratorActionBtn.classList.add('hidden');
+                const victim = players.find(p => p.id === victimId);
+                let prompt = '';
+                let selectablePlayers = [];
+
+                if (type === 'Jäger') {
+                    UIElements.currentNarratorAction.textContent = `Rache des Jägers (${victim.name})`;
+                    prompt = 'Wähle einen Spieler, den du mit in den Tod reißen willst.';
+                    selectablePlayers = players.filter(p => p.isAlive);
+                } else if (type === 'Ritter') {
+                    UIElements.currentNarratorAction.textContent = `Rache des Ritters (${victim.name})`;
+                    prompt = 'Wähle den Werwolf zur Linken des Ritters.';
+                    selectablePlayers = players.filter(p => p.isAlive && p.role.name.includes('Werwolf'));
+                }
+
+                if (selectablePlayers.length === 0) {
+                    this.logToGame(`Keine gültigen Ziele für die Rache von ${victim.name}.`, 'text-gray-400');
+                    UIElements.narratorActionPanel.classList.add('hidden');
+                    this.processDaybreakActions();
+                    return;
+                }
+
+                UIElements.actionPrompt.textContent = prompt;
+                UIElements.narratorPlayerSelection.innerHTML = selectablePlayers.map(p => 
+                    `<button class="bg-gray-600 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded" data-player-id="${p.id}">${p.name}</button>`
+                ).join('');
+                
+                UIElements.narratorPlayerSelection.querySelectorAll('button').forEach(btn => {
+                    btn.onclick = () => {
+                        const target = players.find(p => p.id === btn.dataset.playerId);
+                        this.killPlayer(target, `Rache von ${victim.name}`);
+                        if (type === 'Jäger') victim.role.uses--;
+                        UIElements.narratorActionPanel.classList.add('hidden');
+                        this.processDaybreakActions();
+                    };
+                });
+            },
+            
+            startDay() {
+                UIElements.startDayBtn.classList.add('hidden');
+                UIElements.dayPhaseControls.classList.remove('hidden');
+                gameState.currentPhase = 'day-voting';
+                narratorState.votes = {};
+                players.filter(p => p.isAlive).forEach(p => { narratorState.votes[p.id] = 0; });
+                const msg = "Das Dorf stimmt ab, wer gelyncht werden soll.";
+                UIElements.narratorText.innerHTML = `<strong class="text-yellow-300">${msg}</strong>`;
+                this.logToGame(msg, "text-yellow-300");
+                UIManager.renderPlayerStatus();
+            },
+            
+            adjustVote(playerId, amount) {
+                if(gameState.currentPhase !== 'day-voting' || !players.find(p => p.id === playerId)?.isAlive) return;
+                const currentVotes = narratorState.votes[playerId] || 0;
+                narratorState.votes[playerId] = Math.max(0, currentVotes + amount);
+                UIManager.renderPlayerStatus();
+            },
+
+            executeVote() {
+                const votes = narratorState.votes;
+                const maxVotes = Math.max(...Object.values(votes));
+                if (maxVotes === 0) {
+                    const msg = "Keine Stimmen wurden abgegeben.";
+                    this.logToGame(msg, "text-gray-400");
+                    UIElements.narratorText.innerHTML = msg;
+                    return;
+                }
+                const mostVotedPlayers = Object.keys(votes).filter(id => votes[id] === maxVotes);
+
+                if (mostVotedPlayers.length === 1) {
+                    const playerToKill = players.find(p => p.id === mostVotedPlayers[0]);
+                    
+                    if (playerToKill.role.name === 'Dorfdepp') {
+                        const msg = `${playerToKill.name} ist der Dorfdepp und kann nicht gelyncht werden!`;
+                        this.logToGame(msg, "text-green-400");
+                        UIElements.narratorText.innerHTML = `<strong class="text-green-400">${msg}</strong>`;
+                        this.forceNight();
+                        return;
+                    }
+                    
+                    if (playerToKill.role.name === 'Alter Mann') {
+                        gameState.specialAbilitiesDisabled = true;
+                        const msg = `${playerToKill.name} (Alter Mann) wurde gelyncht! Die Fähigkeiten der Dorfbewohner sind in der nächsten Nacht blockiert.`;
+                        this.logToGame(msg, "text-yellow-500");
+                        UIElements.narratorText.innerHTML = `<strong class="text-yellow-500">${msg}</strong>`;
+                    }
+
+                    this.logToGame(`${playerToKill.name} wurde mit ${maxVotes} Stimmen vom Dorf gelyncht.`, "text-red-500");
+                    this.killPlayer(playerToKill, 'vom Dorf gelyncht');
+                    
+                    if (this.checkForWin()) return;
+                    this.processDaybreakActions();
+
+                } else {
+                    const playerNames = mostVotedPlayers.map(id => players.find(p => p.id === id).name).join(', ');
+                    const msg = `Gleichstand zwischen: ${playerNames}. Eine Neuwahl ist erforderlich.`;
+                    this.logToGame(msg, "text-yellow-400");
+                    UIElements.narratorText.innerHTML = `<strong class="text-yellow-400">${msg}</strong>`;
+                }
+            },
+
+            handleTie() {
+                const msg = "Neuwahl wurde ausgerufen. Alle Stimmen zurückgesetzt.";
+                this.logToGame(msg, "text-yellow-400");
+                UIElements.narratorText.innerHTML = `<strong class="text-yellow-400">${msg}</strong>`;
+                players.filter(p => p.isAlive).forEach(p => { narratorState.votes[p.id] = 0; });
+                UIManager.renderPlayerStatus();
+            },
+
+            forceNight() {
+                if (this.checkForWin()) return;
+                
+                gameState.currentPhase = 'night-start';
+                UIElements.dayPhaseControls.classList.add('hidden');
+                UIElements.startNightBtn.classList.remove('hidden');
+                UIElements.narratorText.innerHTML = "Die Abstimmung ist beendet. Bereit für die Nacht.";
+                UIManager.renderPlayerStatus();
+            },
+            
+            logToGame(message, colorClass = 'text-gray-400') {
+                const time = new Date().toLocaleTimeString('de-DE');
+                UIElements.gameLog.innerHTML += `<p class="${colorClass}">[${time}] ${message}</p>`;
+                UIElements.gameLog.scrollTop = UIElements.gameLog.scrollHeight;
+            },
+
+            checkForWin() {
+                if (!gameState.isGameActive) return true;
+
+                const livingPlayers = players.filter(p => p.isAlive);
+                if (livingPlayers.length === 0) return false;
+
+                const livingWerewolves = livingPlayers.filter(p => p.role.name.includes('Werwolf'));
+                const livingVillagers = livingPlayers.filter(p => !p.role.name.includes('Werwolf'));
+
+                if (livingWerewolves.length === 0) {
+                    this.endGame('Die Dorfbewohner');
+                    return true;
+                }
+
+                if (livingWerewolves.length >= livingVillagers.length) {
+                    this.endGame('Die Werwölfe');
+                    return true;
+                }
+                
+                return false;
+            },
+
+            endGame(winningTeam) {
+                gameState.isGameActive = false;
+                lastGameState = {
+                    players: JSON.parse(JSON.stringify(players)),
+                    gameLogHTML: UIElements.gameLog.innerHTML,
+                };
+                UIElements.winningTeamText.textContent = `${winningTeam} haben gewonnen!`;
+                UIManager.toggleModal(UIElements.gameOverModal, true);
+            },
+
+            startNewRound() {
+                UIManager.toggleModal(UIElements.gameOverModal, false);
+                UIElements.narratorView.classList.add('hidden');
+                UIElements.dayPhaseControls.classList.add('hidden');
+                UIElements.startNightBtn.classList.remove('hidden');
+                UIElements.backToMenuBtn.classList.add('hidden');
+                UIElements.startMenu.classList.remove('hidden');
+                this.initialize();
+            },
+            
+            reviewLastGame() {
+                if (!lastGameState) return;
+                UIManager.toggleModal(UIElements.gameOverModal, false);
+                UIElements.startMenu.classList.add('hidden');
+                UIElements.narratorView.classList.remove('hidden');
+                
+                UIElements.startNightBtn.classList.add('hidden');
+                UIElements.startDayBtn.classList.add('hidden');
+                UIElements.dayPhaseControls.classList.add('hidden');
+                UIElements.backToMenuBtn.classList.remove('hidden');
+
+                UIElements.narratorText.innerHTML = "Rückblick auf das letzte Spiel";
+                UIElements.gameLog.innerHTML = lastGameState.gameLogHTML;
+                UIManager.renderPlayerStatus(lastGameState.players, true);
+            },
+        };
+        
+        // =======================================================================
+        // MODULE: APPLICATION INITIALIZATION
+        // =======================================================================
+        
+        function setupAllEventListeners() {
+            UIElements.splashStartBtn.addEventListener('click', () => {
+                UIElements.splashScreen.classList.add('hidden');
+                UIElements.startMenu.classList.remove('hidden');
+            });
+
+            UIElements.decreasePlayerCount.addEventListener('click', () => GameLogic.changePlayerCount(-1));
+            UIElements.increasePlayerCount.addEventListener('click', () => GameLogic.changePlayerCount(1));
+            UIElements.startGameBtn.addEventListener('click', () => GameLogic.startGame());
+            UIElements.advancedSettingsBtn.addEventListener('click', () => {
+                UIManager.renderNightWakeUpOrderList();
+                UIManager.toggleModal(UIElements.advancedSettingsModal, true);
+            });
+            UIElements.closeAdvancedSettingsModalBtn.addEventListener('click', () => UIManager.toggleModal(UIElements.advancedSettingsModal, false));
+            UIElements.submitCurrentPlayerNameBtn.addEventListener('click', () => GameLogic.submitPlayerName());
+            UIElements.roleSeenBtn.addEventListener('click', () => GameLogic.proceedToNextPlayer());
+            
+            UIElements.playerStatus.addEventListener('click', (e) => {
+                 const voteBtn = e.target.closest('button[data-vote-action]');
+                 if (voteBtn) {
+                     const { voteAction, playerId } = voteBtn.dataset;
+                     const amount = voteAction === 'plus' ? 1 : -1;
+                     GameLogic.adjustVote(playerId, amount);
+                     return;
+                 }
+
+                 const detailsBtn = e.target.closest('[data-action="show-details"]');
+                 if(detailsBtn) {
+                    const player = players.find(p => p.id === detailsBtn.dataset.playerId) || lastGameState?.players.find(p => p.id === detailsBtn.dataset.playerId);
+                    if(player) UIManager.showPlayerZoomModal(player);
+                 }
+            });
+
+            UIElements.closeInfoModalBtn.addEventListener('click', () => UIManager.toggleModal(UIElements.roleInfoModal, false));
+            UIElements.closeSummaryModalBtn.addEventListener('click', () => UIManager.toggleModal(UIElements.rolesSummaryModal, false));
+            
+            UIElements.editOrderBtn.addEventListener('click', () => {
+                UIElements.editOrderBtn.classList.add('hidden');
+                UIElements.saveOrderBtn.classList.remove('hidden');
+                UIManager.renderNightWakeUpOrderList(true);
+            });
+
+            UIElements.saveOrderBtn.addEventListener('click', () => {
+                UIElements.saveOrderBtn.classList.add('hidden');
+                UIElements.editOrderBtn.classList.remove('hidden');
+                UIManager.renderNightWakeUpOrderList(false);
+            });
+            
+            UIElements.resetOrderBtn.addEventListener('click', () => {
+                GameLogic.resetNightOrder();
+                const isEditing = !UIElements.saveOrderBtn.classList.contains('hidden');
+                UIManager.renderNightWakeUpOrderList(isEditing);
+            });
+            
+            UIElements.nightWakeUpOrderList.addEventListener('click', (e) => {
+                const button = e.target.closest('button[data-action]');
+                if (!button) return;
+                const item = button.closest('.order-item');
+                if (!item) return;
+
+                const isEditing = !UIElements.saveOrderBtn.classList.contains('hidden');
+                if (!isEditing) return;
+
+                const index = parseInt(item.dataset.index, 10);
+                const action = button.dataset.action;
+
+                GameLogic.reorderNightWakeUp(index, action);
+            });
+
+            UIElements.startNightBtn.addEventListener('click', () => GameLogic.startNight());
+            UIElements.nextStepBtn.addEventListener('click', () => GameLogic.advanceToNextRole());
+            UIElements.confirmNarratorActionBtn.addEventListener('click', () => GameLogic.confirmRoleAction());
+            UIElements.cancelNarratorActionBtn.addEventListener('click', () => {
+                if (UIElements.cancelNarratorActionBtn.textContent === "Zurück") {
+                    GameLogic.setupWitchAction();
+                } else {
+                    GameLogic.advanceToNextRole()
+                }
+            });
+
+            UIElements.decreaseHealPotions.addEventListener('click', () => GameLogic.changePotionCount('heal', -1));
+            UIElements.increaseHealPotions.addEventListener('click', () => GameLogic.changePotionCount('heal', 1));
+            UIElements.decreaseKillPotions.addEventListener('click', () => GameLogic.changePotionCount('kill', -1));
+            UIElements.increaseKillPotions.addEventListener('click', () => GameLogic.changePotionCount('kill', 1));
+            UIElements.decreaseHunterUses.addEventListener('click', () => GameLogic.changeHunterUses(-1));
+            UIElements.increaseHunterUses.addEventListener('click', () => GameLogic.changeHunterUses(1));
+
+            UIElements.startDayBtn.addEventListener('click', () => GameLogic.startDay());
+            UIElements.executeVoteBtn.addEventListener('click', () => GameLogic.executeVote());
+            UIElements.handleTieBtn.addEventListener('click', () => GameLogic.handleTie());
+            UIElements.forceNightBtn.addEventListener('click', () => GameLogic.forceNight());
+            UIElements.newRoundBtn.addEventListener('click', () => GameLogic.startNewRound());
+            UIElements.reviewLastGameBtn.addEventListener('click', () => GameLogic.reviewLastGame());
+            UIElements.backToMenuBtn.addEventListener('click', () => GameLogic.startNewRound());
+            UIElements.hideConsoleToggleInput.addEventListener('change', (e) => {
+                UIElements.gameLogWrapper.classList.toggle('hidden', !e.target.checked);
+            });
+        }
+        
+        window.onload = () => {
+            initializeDOMElements();
+            GameLogic.initialize();
+            setupAllEventListeners();
+        };
+
+    </script>
+</body>
+</html>
