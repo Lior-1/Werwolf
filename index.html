@@ -301,6 +301,11 @@
                 <p id="revealedRoleDescription" class="text-lg text-gray-300 mb-8 max-w-md mx-auto"></p>
                 <button id="roleSeenBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg">Gesehen & weitergeben</button>
             </div>
+            <div id="allRolesDistributedSection" class="hidden">
+                <p class="text-2xl mb-4 font-semibold">Alle Rollen wurden verteilt!</p>
+                <p class="text-lg text-gray-300 mb-8 max-w-md mx-auto">Das Gerät muss jetzt an den Spielleiter zurückgegeben werden.</p>
+                <button id="goToNarratorBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg">Weiter zum Spielleiter</button>
+            </div>
         </section>
 
         <section id="narratorView" class="hidden">
@@ -458,6 +463,7 @@
                 nameInputSection: get('nameInputSection'), currentPlayerNameInput: get('currentPlayerNameInput'), currentPlayerNameError: get('currentPlayerNameError'),
                 submitCurrentPlayerNameBtn: get('submitCurrentPlayerNameBtn'), roleRevealSection: get('roleRevealSection'), revealedRolePlayerName: get('revealedRolePlayerName'),
                 revealedRoleName: get('revealedRoleName'), revealedRoleDescription: get('revealedRoleDescription'), roleSeenBtn: get('roleSeenBtn'),
+                allRolesDistributedSection: get('allRolesDistributedSection'), goToNarratorBtn: get('goToNarratorBtn'),
                 showRolesSummaryBtn: get('showRolesSummaryBtn'), narratorText: get('narratorText'), gameLog: get('gameLog'), gameLogWrapper: get('gameLogWrapper'),
                 playerStatus: get('playerStatus'), startNightBtn: get('startNightBtn'), startDayBtn: get('startDayBtn'), nextStepBtn: get('nextStepBtn'),
                 narratorActionPanel: get('narratorActionPanel'), currentNarratorAction: get('currentNarratorAction'), actionPrompt: get('action-prompt'), narratorPlayerSelection: get('narratorPlayerSelection'),
@@ -777,10 +783,17 @@
                     UIElements.currentPlayerNameInput.value = '';
                     UIElements.currentPlayerNameInput.focus();
                 } else {
-                    UIElements.playerInputAndRoleReveal.classList.add('hidden');
-                    UIElements.narratorView.classList.remove('hidden');
-                    UIManager.renderPlayerStatus();
+                    UIElements.roleRevealSection.classList.add('hidden');
+                    UIElements.allRolesDistributedSection.classList.remove('hidden');
+                    UIElements.currentPhaseTitle.textContent = 'Rollenverteilung abgeschlossen';
                 }
+            },
+
+            goToNarratorView() {
+                UIElements.playerInputAndRoleReveal.classList.add('hidden');
+                UIElements.allRolesDistributedSection.classList.add('hidden');
+                UIElements.narratorView.classList.remove('hidden');
+                UIManager.renderPlayerStatus();
             },
             
             submitPlayerName() {
@@ -1340,6 +1353,7 @@
             UIElements.closeAdvancedSettingsModalBtn.addEventListener('click', () => UIManager.toggleModal(UIElements.advancedSettingsModal, false));
             UIElements.submitCurrentPlayerNameBtn.addEventListener('click', () => GameLogic.submitPlayerName());
             UIElements.roleSeenBtn.addEventListener('click', () => GameLogic.proceedToNextPlayer());
+            UIElements.goToNarratorBtn.addEventListener('click', () => GameLogic.goToNarratorView());
             
             UIElements.playerStatus.addEventListener('click', (e) => {
                  const voteBtn = e.target.closest('button[data-vote-action]');
