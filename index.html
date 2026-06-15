@@ -199,6 +199,76 @@
         }
 
         /* ======================================================================= */
+        /* TOGGLE-SWITCH (form-switch)                                             */
+        /* ======================================================================= */
+        .form-switch {
+            position: relative;
+            display: inline-block;
+            width: 3rem;
+            height: 1.75rem;
+            flex-shrink: 0;
+        }
+        .form-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .form-switch .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #4b5563; /* gray-600 */
+            border-radius: 999px;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .form-switch .slider::before {
+            content: "";
+            position: absolute;
+            height: 1.25rem;
+            width: 1.25rem;
+            left: 0.25rem;
+            bottom: 0.25rem;
+            background-color: white;
+            border-radius: 50%;
+            transition: transform 0.2s ease-in-out;
+        }
+        .form-switch input:checked + .slider {
+            background-color: #4f46e5; /* indigo-600 */
+        }
+        .form-switch input:checked + .slider::before {
+            transform: translateX(1.25rem);
+        }
+        .form-switch input:focus-visible + .slider {
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.4);
+        }
+
+        /* ======================================================================= */
+        /* AKKORDEON (Erweiterte Einstellungen)                                    */
+        /* ======================================================================= */
+        .settings-accordion-content {
+            overflow: hidden;
+            transition: max-height 0.3s ease-in-out;
+            max-height: 0;
+        }
+        .settings-accordion-content.open {
+            max-height: 1000px;
+        }
+        .settings-accordion-toggle .accordion-chevron {
+            transition: transform 0.3s ease-in-out;
+        }
+        .settings-accordion-toggle.open .accordion-chevron {
+            transform: rotate(180deg);
+        }
+        .settings-accordion-toggle {
+            width: 100%;
+            cursor: pointer;
+            background: none;
+            border: none;
+            text-align: left;
+            padding: 0;
+        }
+
+        /* ======================================================================= */
         /* ANIMATIONEN                                                             */
         /* ======================================================================= */
         @keyframes fadeIn {
@@ -296,15 +366,15 @@
                 <button id="submitCurrentPlayerNameBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-lg">Namen bestätigen</button>
             </div>
             <div id="roleRevealSection" class="hidden">
-                <p id="revealedRolePlayerName" class="text-2xl mb-4 font-semibold"></p>
-                <div id="roleRevealCard" class="cursor-pointer select-none bg-gray-900/50 border-2 border-indigo-500 rounded-lg p-8 mb-8 max-w-md mx-auto transition-all duration-300">
-                    <p id="roleRevealHint" class="text-lg text-gray-300">Tippen &amp; halten, um deine Rolle aufzudecken</p>
+                <p id="revealedRolePlayerName" class="text-2xl mb-4 font-semibold px-2 break-words"></p>
+                <div id="roleRevealCard" class="cursor-pointer select-none bg-gray-900/50 border-2 border-indigo-500 rounded-lg p-6 mb-8 max-w-md mx-auto w-full transition-all duration-300 overflow-hidden">
+                    <p id="roleRevealHint" class="text-lg text-gray-300 break-words">Tippen, um deine Rolle aufzudecken</p>
                     <div id="roleRevealContent" class="hidden">
-                        <p id="revealedRoleName" class="text-6xl font-extrabold text-white mb-4"></p>
-                        <p id="revealedRoleDescription" class="text-lg text-gray-300"></p>
+                        <p id="revealedRoleName" class="text-4xl sm:text-5xl font-extrabold text-white mb-4 break-words"></p>
+                        <p id="revealedRoleDescription" class="text-base text-gray-300 break-words leading-relaxed"></p>
                     </div>
                 </div>
-                <button id="roleSeenBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg hidden">Gesehen & weitergeben</button>
+                <button id="roleSeenBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg disabled:opacity-40 disabled:cursor-not-allowed" disabled>Gesehen & weitergeben</button>
             </div>
             <div id="allRolesDistributedSection" class="hidden">
                 <p class="text-2xl mb-4 font-semibold">Alle Rollen wurden verteilt!</p>
@@ -353,34 +423,93 @@
     
     <div id="advancedSettingsModal" class="fixed inset-0 p-0 hidden modal-backdrop">
         <div id="advancedSettingsPanel" class="modal-slide modal-hidden bg-gray-800 h-full max-w-md w-full ml-auto text-white overflow-y-auto border-l border-gray-700">
-            <div class="p-6 space-y-6">
-                <div class="flex justify-between items-center">
+            <div class="p-6 space-y-4">
+                <div class="flex justify-between items-center mb-2">
                     <h3 class="text-2xl font-bold text-indigo-300">Erweiterte Einstellungen</h3>
                     <button id="closeAdvancedSettingsModalBtn" aria-label="Schließen" class="text-gray-400 hover:text-white text-3xl">&times;</button>
                 </div>
-                <div class="bg-gray-900/50 p-4 rounded-lg">
-                    <h4 class="text-xl font-semibold text-gray-200 mb-4">Nachtaufwachreihenfolge</h4>
-                    <div id="nightWakeUpOrderList" class="bg-gray-800 p-3 rounded-lg min-h-[150px] space-y-2 border border-gray-700"></div>
-                     <div class="flex justify-between items-center mt-3">
-                        <button id="resetOrderBtn" class="text-sm bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded-md">Zurücksetzen</button>
-                        <div>
-                            <button id="editOrderBtn" class="text-sm bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded-md">Bearbeiten</button>
-                            <button id="saveOrderBtn" class="text-sm bg-green-600 hover:bg-green-700 px-3 py-1 rounded-md hidden">Speichern</button>
+
+                <div class="bg-gray-900/50 rounded-lg overflow-hidden">
+                    <button class="settings-accordion-toggle p-4 flex justify-between items-center" data-accordion="order">
+                        <h4 class="text-xl font-semibold text-gray-200">Nachtaufwachreihenfolge</h4>
+                        <svg class="accordion-chevron w-5 h-5 text-gray-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                    </button>
+                    <div class="settings-accordion-content" data-accordion-content="order">
+                        <div class="px-4 pb-4">
+                            <div id="nightWakeUpOrderList" class="bg-gray-800 p-3 rounded-lg min-h-[150px] space-y-2 border border-gray-700"></div>
+                            <div class="flex justify-between items-center mt-3">
+                                <button id="resetOrderBtn" class="text-sm bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded-md">Zurücksetzen</button>
+                                <div>
+                                    <button id="editOrderBtn" class="text-sm bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded-md">Bearbeiten</button>
+                                    <button id="saveOrderBtn" class="text-sm bg-green-600 hover:bg-green-700 px-3 py-1 rounded-md hidden">Speichern</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                 <div class="bg-gray-900/50 p-4 rounded-lg">
-                    <h4 class="text-xl font-semibold mb-3 text-gray-200">Tränke der Hexe</h4>
-                     <div class="flex items-center justify-between"><label class="text-gray-300">Heiltränke</label><div class="flex items-center player-count-control"><button id="decreaseHealPotions" class="bg-gray-600 text-white rounded-full">-</button><span id="healPotionCount" class="text-xl mx-4">1</span><button id="increaseHealPotions" class="bg-gray-600 text-white rounded-full">+</button></div></div>
-                     <div class="flex items-center justify-between mt-2"><label class="text-gray-300">Gifttränke</label><div class="flex items-center player-count-control"><button id="decreaseKillPotions" class="bg-gray-600 text-white rounded-full">-</button><span id="killPotionCount" class="text-xl mx-4">1</span><button id="increaseKillPotions" class="bg-gray-600 text-white rounded-full">+</button></div></div>
+
+                <div class="bg-gray-900/50 rounded-lg overflow-hidden">
+                    <button class="settings-accordion-toggle p-4 flex justify-between items-center" data-accordion="potions">
+                        <h4 class="text-xl font-semibold text-gray-200">Tränke der Hexe</h4>
+                        <svg class="accordion-chevron w-5 h-5 text-gray-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                    </button>
+                    <div class="settings-accordion-content" data-accordion-content="potions">
+                        <div class="px-4 pb-4">
+                            <div class="flex items-center justify-between"><label class="text-gray-300">Heiltränke</label><div class="flex items-center player-count-control"><button id="decreaseHealPotions" class="bg-gray-600 text-white rounded-full">-</button><span id="healPotionCount" class="text-xl mx-4">1</span><button id="increaseHealPotions" class="bg-gray-600 text-white rounded-full">+</button></div></div>
+                            <div class="flex items-center justify-between mt-2"><label class="text-gray-300">Gifttränke</label><div class="flex items-center player-count-control"><button id="decreaseKillPotions" class="bg-gray-600 text-white rounded-full">-</button><span id="killPotionCount" class="text-xl mx-4">1</span><button id="increaseKillPotions" class="bg-gray-600 text-white rounded-full">+</button></div></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="bg-gray-900/50 p-4 rounded-lg">
-                    <h4 class="text-xl font-semibold mb-3 text-gray-200">Fähigkeit des Jägers</h4>
-                     <div class="flex items-center justify-between"><label class="text-gray-300">Anzahl der "Mitreiß-Aktionen"</label><div class="flex items-center player-count-control"><button id="decreaseHunterUses" class="bg-gray-600 text-white rounded-full">-</button><span id="hunterUsesCount" class="text-xl mx-4">1</span><button id="increaseHunterUses" class="bg-gray-600 text-white rounded-full">+</button></div></div>
+
+                <div class="bg-gray-900/50 rounded-lg overflow-hidden">
+                    <button class="settings-accordion-toggle p-4 flex justify-between items-center" data-accordion="hunter">
+                        <h4 class="text-xl font-semibold text-gray-200">Fähigkeit des Jägers</h4>
+                        <svg class="accordion-chevron w-5 h-5 text-gray-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                    </button>
+                    <div class="settings-accordion-content" data-accordion-content="hunter">
+                        <div class="px-4 pb-4">
+                            <div class="flex items-center justify-between"><label class="text-gray-300">Anzahl der "Mitreiß-Aktionen"</label><div class="flex items-center player-count-control"><button id="decreaseHunterUses" class="bg-gray-600 text-white rounded-full">-</button><span id="hunterUsesCount" class="text-xl mx-4">1</span><button id="increaseHunterUses" class="bg-gray-600 text-white rounded-full">+</button></div></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="bg-gray-900/50 p-4 rounded-lg">
-                    <h4 class="text-xl font-semibold mb-3 text-gray-200">Anzeige</h4>
-                     <div class="flex items-center justify-between"><label for="hideConsoleToggleInput" class="text-gray-300">Konsole anzeigen</label><label class="form-switch"><input type="checkbox" id="hideConsoleToggleInput" checked><span class="slider"></span></label></div>
+
+                <div class="bg-gray-900/50 rounded-lg overflow-hidden">
+                    <button class="settings-accordion-toggle p-4 flex justify-between items-center" data-accordion="rules">
+                        <h4 class="text-xl font-semibold text-gray-200">Spielregeln</h4>
+                        <svg class="accordion-chevron w-5 h-5 text-gray-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                    </button>
+                    <div class="settings-accordion-content" data-accordion-content="rules">
+                        <div class="px-4 pb-4 space-y-4">
+                            <div class="flex items-center justify-between gap-3">
+                                <label for="loversWinToggleInput" class="text-gray-300">Liebespaar kann allein gewinnen<br><span class="text-xs text-gray-500">Sind nur die zwei Verliebten übrig, gewinnen sie gemeinsam – egal welcher Fraktion sie angehören.</span></label>
+                                <label class="form-switch"><input type="checkbox" id="loversWinToggleInput"><span class="slider"></span></label>
+                            </div>
+                            <div class="flex items-center justify-between gap-3">
+                                <label for="werewolfMajorityToggleInput" class="text-gray-300">Werwölfe gewinnen bereits bei Gleichstand<br><span class="text-xs text-gray-500">Aus: Die Werwölfe müssen in der Mehrheit sein (mehr Wölfe als Dorfbewohner), um zu gewinnen.</span></label>
+                                <label class="form-switch"><input type="checkbox" id="werewolfMajorityToggleInput" checked><span class="slider"></span></label>
+                            </div>
+                            <div class="flex items-center justify-between gap-3">
+                                <label for="villageIdiotImmuneToggleInput" class="text-gray-300">Dorfdepp ist vor Hinrichtung sicher<br><span class="text-xs text-gray-500">Wird der Dorfdepp gehenkt, übersteht er es und seine Stimme zählt danach nicht mehr.</span></label>
+                                <label class="form-switch"><input type="checkbox" id="villageIdiotImmuneToggleInput" checked><span class="slider"></span></label>
+                            </div>
+                            <div class="flex items-center justify-between gap-3">
+                                <label for="tieNoExecutionToggleInput" class="text-gray-300">Bei erneutem Gleichstand: niemand wird gehenkt<br><span class="text-xs text-gray-500">Aus: Bei jedem Gleichstand wird neu abgestimmt, bis es einen klaren Verlierer gibt.</span></label>
+                                <label class="form-switch"><input type="checkbox" id="tieNoExecutionToggleInput"><span class="slider"></span></label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900/50 rounded-lg overflow-hidden">
+                    <button class="settings-accordion-toggle p-4 flex justify-between items-center" data-accordion="display">
+                        <h4 class="text-xl font-semibold text-gray-200">Anzeige</h4>
+                        <svg class="accordion-chevron w-5 h-5 text-gray-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                    </button>
+                    <div class="settings-accordion-content" data-accordion-content="display">
+                        <div class="px-4 pb-4">
+                            <div class="flex items-center justify-between"><label for="hideConsoleToggleInput" class="text-gray-300">Konsole anzeigen</label><label class="form-switch"><input type="checkbox" id="hideConsoleToggleInput" checked><span class="slider"></span></label></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -496,6 +625,8 @@
                 narratorControls: get('narratorControls'),
                 backToMenuBtn: get('backToMenuBtn'),
                 hideConsoleToggleInput: get('hideConsoleToggleInput'),
+                loversWinToggleInput: get('loversWinToggleInput'), werewolfMajorityToggleInput: get('werewolfMajorityToggleInput'),
+                villageIdiotImmuneToggleInput: get('villageIdiotImmuneToggleInput'), tieNoExecutionToggleInput: get('tieNoExecutionToggleInput'),
             };
         }
         
@@ -681,7 +812,8 @@
         const GameLogic = {
             initialize() {
                 players = [];
-                gameConfig = { playerCount: DEFAULT_PLAYER_COUNT, selectedRoles: [], nightWakeUpOrder: [...DEFAULT_NIGHT_ORDER_NIGHT1] };
+                gameConfig = { playerCount: DEFAULT_PLAYER_COUNT, selectedRoles: [], nightWakeUpOrder: [...DEFAULT_NIGHT_ORDER_NIGHT1],
+                    rules: { loversCanWinAlone: false, werewolfWinOnTie: true, villageIdiotImmune: true, tieNoExecution: false } };
                 gameState = {
                     isGameActive: false, currentNight: 0, currentPlayerConfigIndex: 0,
                     currentNightRoleIndex: 0, currentPhase: 'setup', specialAbilitiesDisabled: false, pendingDaybreakActions: [],
@@ -824,10 +956,12 @@
                 UIElements.revealedRoleName.textContent = player.role.name;
                 UIElements.revealedRoleDescription.textContent = player.role.description;
                 UIElements.roleRevealHint.classList.remove('hidden');
+                UIElements.roleRevealHint.textContent = 'Tippen, um deine Rolle aufzudecken';
                 UIElements.roleRevealContent.classList.add('hidden');
-                UIElements.roleSeenBtn.classList.add('hidden');
+                UIElements.roleSeenBtn.disabled = true;
                 UIElements.roleRevealCard.classList.remove('border-indigo-400');
                 UIElements.roleRevealCard.classList.add('border-indigo-500');
+                UIElements.roleRevealCard.dataset.opened = 'false';
                 gameState.currentPlayerConfigIndex++;
             },
 
@@ -1233,7 +1367,7 @@
                 if (mostVotedPlayers.length === 1) {
                     const playerToKill = players.find(p => p.id === mostVotedPlayers[0]);
                     
-                    if (playerToKill.role.name === 'Dorfdepp') {
+                    if (playerToKill.role.name === 'Dorfdepp' && gameConfig.rules?.villageIdiotImmune !== false) {
                         const msg = `${playerToKill.name} ist der Dorfdepp und kann nicht gelyncht werden!`;
                         this.logToGame(msg, "text-green-400");
                         UIElements.narratorText.innerHTML = `<strong class="text-green-400">${msg}</strong>`;
@@ -1256,6 +1390,13 @@
 
                 } else {
                     const playerNames = mostVotedPlayers.map(id => players.find(p => p.id === id).name).join(', ');
+                    if (gameConfig.rules?.tieNoExecution) {
+                        const msg = `Gleichstand zwischen: ${playerNames}. Niemand wird gehenkt.`;
+                        this.logToGame(msg, "text-yellow-400");
+                        UIElements.narratorText.innerHTML = `<strong class="text-yellow-400">${msg}</strong>`;
+                        this.forceNight();
+                        return;
+                    }
                     const msg = `Gleichstand zwischen: ${playerNames}. Eine Neuwahl ist erforderlich.`;
                     this.logToGame(msg, "text-yellow-400");
                     UIElements.narratorText.innerHTML = `<strong class="text-yellow-400">${msg}</strong>`;
@@ -1292,6 +1433,11 @@
                 const livingPlayers = players.filter(p => p.isAlive);
                 if (livingPlayers.length === 0) return false;
 
+                if (gameConfig.rules?.loversCanWinAlone && livingPlayers.length === 2 && livingPlayers.every(p => p.isLoved)) {
+                    this.endGame('Das Liebespaar');
+                    return true;
+                }
+
                 const livingWerewolves = livingPlayers.filter(p => p.role.name.includes('Werwolf'));
                 const livingVillagers = livingPlayers.filter(p => !p.role.name.includes('Werwolf'));
 
@@ -1300,7 +1446,11 @@
                     return true;
                 }
 
-                if (livingWerewolves.length >= livingVillagers.length) {
+                const werewolvesWin = gameConfig.rules?.werewolfWinOnTie
+                    ? livingWerewolves.length >= livingVillagers.length
+                    : livingWerewolves.length > livingVillagers.length;
+
+                if (werewolvesWin) {
                     this.endGame('Die Werwölfe');
                     return true;
                 }
@@ -1376,31 +1526,25 @@
                 });
             });
 
-            // Tippen & halten zum Aufdecken der Rolle
-            (() => {
-                let holdTimer = null;
-                const HOLD_MS = 350;
-                const reveal = () => {
+            // Einmal tippen zum Aufdecken, erneut tippen zum Verstecken.
+            // Sobald die Rolle einmal angezeigt wurde, kann weitergegeben werden.
+            UIElements.roleRevealCard.addEventListener('click', () => {
+                const isHidden = UIElements.roleRevealContent.classList.contains('hidden');
+                if (isHidden) {
                     UIElements.roleRevealHint.classList.add('hidden');
                     UIElements.roleRevealContent.classList.remove('hidden');
                     UIElements.roleRevealCard.classList.remove('border-indigo-500');
                     UIElements.roleRevealCard.classList.add('border-indigo-400');
-                    UIElements.roleSeenBtn.classList.remove('hidden');
-                };
-                const startHold = (e) => {
-                    if (!UIElements.roleRevealContent.classList.contains('hidden')) return;
-                    holdTimer = setTimeout(reveal, HOLD_MS);
-                };
-                const cancelHold = () => {
-                    if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
-                };
-                UIElements.roleRevealCard.addEventListener('mousedown', startHold);
-                UIElements.roleRevealCard.addEventListener('touchstart', startHold, { passive: true });
-                UIElements.roleRevealCard.addEventListener('mouseup', cancelHold);
-                UIElements.roleRevealCard.addEventListener('mouseleave', cancelHold);
-                UIElements.roleRevealCard.addEventListener('touchend', cancelHold);
-                UIElements.roleRevealCard.addEventListener('touchcancel', cancelHold);
-            })();
+                    UIElements.roleRevealCard.dataset.opened = 'true';
+                    UIElements.roleSeenBtn.disabled = false;
+                } else {
+                    UIElements.roleRevealContent.classList.add('hidden');
+                    UIElements.roleRevealHint.classList.remove('hidden');
+                    UIElements.roleRevealHint.textContent = 'Tippen, um deine Rolle erneut anzuzeigen';
+                    UIElements.roleRevealCard.classList.remove('border-indigo-400');
+                    UIElements.roleRevealCard.classList.add('border-indigo-500');
+                }
+            });
             
             UIElements.playerStatus.addEventListener('click', (e) => {
                  const voteBtn = e.target.closest('button[data-vote-action]');
@@ -1487,6 +1631,30 @@
             UIElements.backToMenuBtn.addEventListener('click', () => GameLogic.startNewRound());
             UIElements.hideConsoleToggleInput.addEventListener('change', (e) => {
                 UIElements.gameLogWrapper.classList.toggle('hidden', !e.target.checked);
+            });
+
+            // Spielregel-Toggles
+            UIElements.loversWinToggleInput.addEventListener('change', (e) => {
+                gameConfig.rules.loversCanWinAlone = e.target.checked;
+            });
+            UIElements.werewolfMajorityToggleInput.addEventListener('change', (e) => {
+                gameConfig.rules.werewolfWinOnTie = e.target.checked;
+            });
+            UIElements.villageIdiotImmuneToggleInput.addEventListener('change', (e) => {
+                gameConfig.rules.villageIdiotImmune = e.target.checked;
+            });
+            UIElements.tieNoExecutionToggleInput.addEventListener('change', (e) => {
+                gameConfig.rules.tieNoExecution = e.target.checked;
+            });
+
+            // Akkordeon in den erweiterten Einstellungen
+            document.querySelectorAll('.settings-accordion-toggle').forEach(toggle => {
+                toggle.addEventListener('click', () => {
+                    const content = document.querySelector(`[data-accordion-content="${toggle.dataset.accordion}"]`);
+                    const isOpen = toggle.classList.contains('open');
+                    toggle.classList.toggle('open', !isOpen);
+                    content.classList.toggle('open', !isOpen);
+                });
             });
         }
         
