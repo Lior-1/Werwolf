@@ -136,8 +136,92 @@
         .bg-gray-600:hover { background-color: #374151; }
 
         /* ======================================================================= */
-        /* SPIELERKARTEN & STATUS                                                  */
+        /* ANIMATIONEN & TRANSITIONS                                               */
         /* ======================================================================= */
+
+        /* Einblend-Animation für Panels und Karten */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.93); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
+            50%       { box-shadow: 0 0 18px 4px rgba(139, 92, 246, 0.45); }
+        }
+        @keyframes nightPulse {
+            0%, 100% { background-color: rgba(30, 20, 50, 0.0); }
+            50%       { background-color: rgba(30, 20, 50, 0.18); }
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-8px); max-height: 0; }
+            to   { opacity: 1; transform: translateY(0); max-height: 600px; }
+        }
+
+        .animate-fadeInUp   { animation: fadeInUp 0.35s cubic-bezier(0.22, 1, 0.36, 1) both; }
+        .animate-fadeInDown { animation: fadeInDown 0.3s cubic-bezier(0.22, 1, 0.36, 1) both; }
+        .animate-fadeIn     { animation: fadeIn 0.25s ease both; }
+        .animate-scaleIn    { animation: scaleIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) both; }
+        .animate-slideDown  { animation: slideDown 0.3s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+        /* Spielerkarten erscheinen mit Verzögerung je nach Index */
+        .player-card { animation: fadeInUp 0.3s cubic-bezier(0.22,1,0.36,1) both; }
+        .player-card:nth-child(1) { animation-delay: 0.03s; }
+        .player-card:nth-child(2) { animation-delay: 0.07s; }
+        .player-card:nth-child(3) { animation-delay: 0.11s; }
+        .player-card:nth-child(4) { animation-delay: 0.15s; }
+        .player-card:nth-child(5) { animation-delay: 0.19s; }
+        .player-card:nth-child(6) { animation-delay: 0.23s; }
+        .player-card:nth-child(7) { animation-delay: 0.27s; }
+        .player-card:nth-child(8) { animation-delay: 0.31s; }
+
+        /* Panel erscheint smooth */
+        #narratorActionPanel:not(.hidden) { animation: fadeInUp 0.3s cubic-bezier(0.22,1,0.36,1) both; }
+        #mainScriptBox:not(.hidden)       { animation: fadeInDown 0.3s cubic-bezier(0.22,1,0.36,1) both; }
+
+        /* Knöpfe in narratorPlayerSelection erscheinen nacheinander */
+        #narratorPlayerSelection button { animation: scaleIn 0.25s cubic-bezier(0.22,1,0.36,1) both; }
+        #narratorPlayerSelection button:nth-child(1) { animation-delay: 0.02s; }
+        #narratorPlayerSelection button:nth-child(2) { animation-delay: 0.06s; }
+        #narratorPlayerSelection button:nth-child(3) { animation-delay: 0.10s; }
+        #narratorPlayerSelection button:nth-child(4) { animation-delay: 0.14s; }
+        #narratorPlayerSelection button:nth-child(5) { animation-delay: 0.18s; }
+        #narratorPlayerSelection button:nth-child(6) { animation-delay: 0.22s; }
+
+        /* Nacht-/Tagphase-Indikator: sanftes Pulsieren */
+        body.phase-night { animation: nightPulse 4s ease-in-out infinite; }
+
+        /* Ausgewählte Spieler-Buttons: Glow */
+        #narratorPlayerSelection button.bg-indigo-500 {
+            animation: pulse-glow 1.5s ease-in-out infinite;
+            box-shadow: 0 0 12px 2px rgba(139, 92, 246, 0.4);
+        }
+
+        /* Modal-Inhalt schön einblenden */
+        .modal-backdrop > div,
+        .modal-backdrop > .bg-gray-800 { animation: scaleIn 0.3s cubic-bezier(0.22,1,0.36,1) both; }
+
+        /* Sprechtext-Box: sanftes Hervorheben beim Erscheinen */
+        #mainScriptBox { border-left: 3px solid #6366f1; }
+
+        /* Statustext-Änderung */
+        #narratorText { transition: opacity 0.2s ease; }
+
+        /* Abstand zwischen verschiebbaren Bereichen */
+        .layout-section + .layout-section { margin-top: 1.75rem; }
+        .layout-section:first-child { margin-top: 1rem; }
+
         .player-card {
             position: relative;
             min-height: 6rem;
@@ -1076,6 +1160,15 @@
                 }
             },
 
+            setNarratorText(html) {
+                // Kurzes Ausblenden dann neuen Text einblenden (Fade-Effekt)
+                UIElements.narratorText.style.opacity = '0';
+                setTimeout(() => {
+                    UIElements.narratorText.innerHTML = html;
+                    UIElements.narratorText.style.opacity = '1';
+                }, 150);
+            },
+
             // Alias: alle Vorlesetexte (Tag/Nacht-Übergänge wie auch Rollenaktionen) laufen
             // über dieselbe feste Box, damit der Text immer an derselben Stelle erscheint.
             setNarratorScript(text) {
@@ -1120,7 +1213,7 @@
                 UIManager.renderDefaultRoles();
                 UIManager.updateStartButtonState();
                 UIElements.gameLog.innerHTML = '';
-                UIElements.narratorText.innerHTML = 'Willkommen, Erzähler!';
+                UIManager.setNarratorText('Willkommen, Erzähler!');
             },
 
             changePlayerCount(amount) {
@@ -1353,11 +1446,12 @@
             },
 
             startNight() {
+                document.body.classList.add('phase-night');
                 let nightStartExtra = '';
                 if(gameState.specialAbilitiesDisabled) {
                     const msg = "Die Fähigkeiten der Dorfbewohner sind diese Nacht blockiert!";
                     this.logToGame(msg, "text-yellow-400");
-                    UIElements.narratorText.innerHTML = `<strong class="text-yellow-400">${msg}</strong>`;
+                    UIManager.setNarratorText(`<strong class="text-yellow-400">${msg}</strong>`);
                     nightStartExtra = ' Wegen des Todes des Alten Mannes durchs Dorf sind in dieser Nacht alle Sonderfähigkeiten blockiert. Es wachen nur die Werwölfe auf.';
                 }
                 gameState.currentPhase = 'night';
@@ -1371,7 +1465,7 @@
                 UIElements.startNightBtn.classList.add('hidden');
                 UIElements.dayPhaseControls.classList.add('hidden');
                 this.logToGame(`Nacht ${gameState.currentNight} beginnt.`, 'text-gray-400');
-                UIElements.narratorText.innerHTML = "Alle Spieler schlafen ein.";
+                UIManager.setNarratorText("Alle Spieler schlafen ein.");
                 UIManager.setMainScript(`Es wird Nacht im Dorf, Nacht Nummer ${gameState.currentNight}. Alle Spieler schließen jetzt die Augen und legen sich schlafen.${nightStartExtra}`);
                 UIManager.renderPlayerStatus();
                 this.processNightStep();
@@ -1396,7 +1490,7 @@
 
                 const previousRoleName = gameState.currentNightRoleIndex > 0 ? activeRolesInOrder[gameState.currentNightRoleIndex - 1] : null;
 
-                UIElements.narratorText.innerHTML = `<strong class="text-white">${roleName}</strong>, wache auf.`;
+                UIManager.setNarratorText(`<strong class="text-white">${roleName}</strong>, wache auf.`);
                 this.logToGame(`${roleName} wacht auf.`, 'text-gray-400');
                 this.setupRoleAction(roleName, previousRoleName);
             },
@@ -1533,7 +1627,7 @@
                     const canKill = witch && witch.role.killPotions > 0;
                     if (!canHeal && !canKill) {
                         this.logToGame(`Die Hexe hat keine nutzbaren Tränke mehr und wird übersprungen.`, 'text-gray-400');
-                        UIElements.narratorText.innerHTML = `<strong class="text-gray-400">Die Hexe hat keine Tränke mehr übrig.</strong>`;
+                        UIManager.setNarratorText(`<strong class="text-gray-400">Die Hexe hat keine Tränke mehr übrig.</strong>`);
                         UIManager.setNarratorScript(`${previousRoleName ? `${this.getRoleCallName(previousRoleName, players.filter(p => p.role.name === previousRoleName && p.isAlive).length > 1)}, schlaft wieder ein. ` : ''}Die Hexe hat keine Tränke mehr übrig und schläft diese Nacht durch.`);
                         setTimeout(() => this.advanceToNextRole(), 1500);
                         return;
@@ -1696,14 +1790,14 @@
                  if (type === 'heal') {
                      witch.role.healPotions--;
                      this.logToGame(`Die Hexe hat ${target.name} gerettet!`, 'text-green-400');
-                     UIElements.narratorText.innerHTML = `Die Hexe hat <strong class="text-green-400">${target.name}</strong> gerettet!`;
+                     UIManager.setNarratorText(`Die Hexe hat <strong class="text-green-400">${target.name}</strong> gerettet!`);
                      narratorState.markedForDeathIds = narratorState.markedForDeathIds.filter(id => id !== target.id);
                  } else {
                      witch.role.killPotions--;
                      narratorState.attacksThisNight[target.id] = (narratorState.attacksThisNight[target.id] || 0) + 1;
                      if (target.isProtected && narratorState.attacksThisNight[target.id] < 2) {
                          this.logToGame(`Die Hexe hat versucht, ${target.name} zu vergiften, doch er/sie wurde beschützt!`, 'text-green-400');
-                         UIElements.narratorText.innerHTML = `Die Hexe griff <strong class="text-orange-400">${target.name}</strong> an, aber er/sie wurde beschützt!`;
+                         UIManager.setNarratorText(`Die Hexe griff <strong class="text-orange-400">${target.name}</strong> an, aber er/sie wurde beschützt!`);
                          target.isProtected = false;
                      } else {
                          const loverScript = this.killPlayer(target, 'von der Hexe getötet');
@@ -1714,13 +1808,26 @@
                      }
                  }
                  UIManager.renderPlayerStatus();
-                 // Nach Tranknutzung: kein Menü mehr zeigen, sondern nur "Weiter"
-                 UIElements.narratorPlayerSelection.innerHTML = `
-                     <p class="text-center text-gray-300 w-full">${type === 'heal' ? '✅ Heiltrank eingesetzt.' : '☠️ Gifttrank eingesetzt.'}</p>
-                 `;
-                 UIElements.nextStepBtn.classList.remove('hidden');
-                 UIElements.confirmNarratorActionBtn.classList.add('hidden');
-                 UIElements.cancelNarratorActionBtn.disabled = true;
+
+                 // Prüfen ob noch ein zweiter Trank nutzbar ist
+                 const stillCanHeal = witch.role.healPotions > 0 && narratorState.markedForDeathIds.length > 0;
+                 const stillCanKill = witch.role.killPotions > 0;
+
+                 if (stillCanHeal || stillCanKill) {
+                     // Zweiter Trank noch verfügbar: zurück ins Hexe-Menü
+                     UIElements.narratorPlayerSelection.innerHTML = `
+                         <p class="text-center text-green-400 w-full text-sm mb-2">${type === 'heal' ? '✅ Heiltrank eingesetzt.' : '☠️ Gifttrank eingesetzt.'}</p>
+                     `;
+                     this.setupWitchAction();
+                 } else {
+                     // Keine Tränke mehr: "Weiter" zeigen
+                     UIElements.narratorPlayerSelection.innerHTML = `
+                         <p class="text-center text-gray-300 w-full">${type === 'heal' ? '✅ Heiltrank eingesetzt.' : '☠️ Gifttrank eingesetzt.'}</p>
+                     `;
+                     UIElements.nextStepBtn.classList.remove('hidden');
+                     UIElements.confirmNarratorActionBtn.classList.add('hidden');
+                     UIElements.cancelNarratorActionBtn.disabled = true;
+                 }
             },
 
             togglePlayerSelection(player, requiredCount) {
@@ -1757,13 +1864,13 @@
                         targets[0].isLoved = true; targets[1].isLoved = true;
                         targets[0].partnerId = targets[1].id; targets[1].partnerId = targets[0].id;
                         this.logToGame(`${targets[0].name} und ${targets[1].name} sind jetzt verliebt.`, 'text-pink-400');
-                        UIElements.narratorText.innerHTML = `<strong class="text-pink-400">${targets[0].name} und ${targets[1].name}</strong> sind jetzt verliebt.`;
+                        UIManager.setNarratorText(`<strong class="text-pink-400">${targets[0].name} und ${targets[1].name}</strong> sind jetzt verliebt.`);
                         break;
                     case 'Beschützer':
                         targets[0].isProtected = true;
                         narratorState.lastProtected = targets[0].id;
                         this.logToGame(`${targets[0].name} wurde diese Nacht beschützt.`, 'text-blue-400');
-                        UIElements.narratorText.innerHTML = `<strong class="text-blue-400">${targets[0].name}</strong> wurde beschützt.`;
+                        UIManager.setNarratorText(`<strong class="text-blue-400">${targets[0].name}</strong> wurde beschützt.`);
                         break;
                     case 'Werwolf':
                     case 'α-Werwolf': {
@@ -1772,18 +1879,18 @@
                         narratorState.attacksThisNight[target.id] = (narratorState.attacksThisNight[target.id] || 0) + 1;
                         if (target.isProtected && narratorState.attacksThisNight[target.id] < 2) {
                             this.logToGame(`${isAlpha ? 'Der α-Werwolf hat' : 'Die Werwölfe haben'} versucht, ${target.name} zu fressen, doch er/sie wurde beschützt!`, 'text-green-400');
-                            UIElements.narratorText.innerHTML = `${isAlpha ? 'Der α-Werwolf griff' : 'Die Werwölfe griffen'} <strong class="text-orange-400">${target.name}</strong> an, aber er/sie wurde beschützt!`;
+                            UIManager.setNarratorText(`${isAlpha ? 'Der α-Werwolf griff' : 'Die Werwölfe griffen'} <strong class="text-orange-400">${target.name}</strong> an, aber er/sie wurde beschützt!`);
                             target.isProtected = false;
                         } else {
                             narratorState.markedForDeathIds.push(target.id);
                             this.logToGame(`${isAlpha ? 'Der α-Werwolf hat sich' : 'Die Werwölfe haben sich'} für ${target.name} entschieden.`, 'text-orange-400');
-                            UIElements.narratorText.innerHTML = `<strong class="text-orange-400">${target.name}</strong> wurde als Opfer gewählt.`;
+                            UIManager.setNarratorText(`<strong class="text-orange-400">${target.name}</strong> wurde als Opfer gewählt.`);
                         }
                         break;
                     }
                     default:
                         // Unbekannte/zukünftige Rolle ohne eigenen Fall: Auswahl wird nur protokolliert.
-                        UIElements.narratorText.innerHTML = `<strong class="text-white">${roleName}</strong> hat <strong class="text-indigo-300">${targets.map(t=>t.name).join(', ')}</strong> ausgewählt.`;
+                        UIManager.setNarratorText(`<strong class="text-white">${roleName}</strong> hat <strong class="text-indigo-300">${targets.map(t=>t.name).join(', ')}</strong> ausgewählt.`);
                         break;
                 }
                 
@@ -1796,7 +1903,7 @@
 
                 playerToKill.isAlive = false;
                 this.logToGame(`${playerToKill.name} ist gestorben (${cause}).`, 'text-red-500');
-                UIElements.narratorText.innerHTML = `<strong class="text-red-500">${playerToKill.name}</strong> ist gestorben!`;
+                UIManager.setNarratorText(`<strong class="text-red-500">${playerToKill.name}</strong> ist gestorben!`);
 
                 let loverScript = '';
                 if (playerToKill.isLoved && playerToKill.partnerId) {
@@ -1918,7 +2025,7 @@
                     publicRoleReveals.push(...narratorState.pendingMorningScripts);
                 }
                 
-                UIElements.narratorText.innerHTML = deathAnnouncements.join('<br>');
+                UIManager.setNarratorText(deathAnnouncements.join('<br>'));
                 const baseScript = namesOfDead.length > 0
                         ? `Das Dorf wacht auf. ${namesOfDead.length === 1 ? `${namesOfDead[0]} hat die Nacht nicht überlebt.` : `${namesOfDead.join(' und ')} haben die Nacht nicht überlebt.`}`
                         : 'Das Dorf wacht auf. Diese Nacht ist niemand gestorben.';
@@ -2001,13 +2108,14 @@
             },
             
             startDay() {
+                document.body.classList.remove('phase-night');
                 UIElements.startDayBtn.classList.add('hidden');
                 UIElements.dayPhaseControls.classList.remove('hidden');
                 gameState.currentPhase = 'day-voting';
                 narratorState.votes = {};
                 players.filter(p => p.isAlive).forEach(p => { narratorState.votes[p.id] = 0; });
                 const msg = "Das Dorf stimmt ab, wer gelyncht werden soll.";
-                UIElements.narratorText.innerHTML = `<strong class="text-yellow-300">${msg}</strong>`;
+                UIManager.setNarratorText(`<strong class="text-yellow-300">${msg}</strong>`);
                 UIManager.setMainScript('Wer von euch hat einen Verdacht? Diskutiert und stimmt ab, wer das Dorf verlassen soll.');
                 this.logToGame(msg, "text-yellow-300");
                 UIManager.renderPlayerStatus();
@@ -2027,7 +2135,7 @@
                 if (maxVotes === 0) {
                     const msg = "Keine Stimmen wurden abgegeben.";
                     this.logToGame(msg, "text-gray-400");
-                    UIElements.narratorText.innerHTML = msg;
+                    UIManager.setNarratorText(msg);
                     return;
                 }
                 const mostVotedPlayers = Object.keys(votes).filter(id => votes[id] === maxVotes);
@@ -2038,7 +2146,7 @@
                     if (playerToKill.isProtected && gameConfig.rules?.protectedVoteImmune !== false) {
                         const msg = `${playerToKill.name} steht noch unter dem Schutz des Beschützers und kann nicht gelyncht werden!`;
                         this.logToGame(msg, "text-blue-400");
-                        UIElements.narratorText.innerHTML = `<strong class="text-blue-400">${msg}</strong>`;
+                        UIManager.setNarratorText(`<strong class="text-blue-400">${msg}</strong>`);
                         return;
                     }
 
@@ -2046,7 +2154,7 @@
                         playerToKill.voteDisabled = true;
                         const msg = `${playerToKill.name} ist der Dorfdepp und kann nicht gelyncht werden!`;
                         this.logToGame(msg, "text-green-400");
-                        UIElements.narratorText.innerHTML = `<strong class="text-green-400">${msg}</strong>`;
+                        UIManager.setNarratorText(`<strong class="text-green-400">${msg}</strong>`);
                         UIManager.setMainScript(`${playerToKill.name} wurde gewählt, doch er ist der Dorfdepp! Er übersteht die Hinrichtung und bleibt im Spiel, seine Stimme zählt von nun an aber nicht mehr.`);
                         UIElements.dayPhaseControls.classList.add('hidden');
                         this.processDaybreakActions();
@@ -2058,7 +2166,7 @@
                         gameState.specialAbilitiesDisabled = true;
                         const msg = `${playerToKill.name} (Alter Mann) wurde gelyncht! Die Fähigkeiten der Dorfbewohner sind in der nächsten Nacht blockiert.`;
                         this.logToGame(msg, "text-yellow-500");
-                        UIElements.narratorText.innerHTML = `<strong class="text-yellow-500">${msg}</strong>`;
+                        UIManager.setNarratorText(`<strong class="text-yellow-500">${msg}</strong>`);
                         if (gameConfig.rules?.revealOnlyWerewolfStatus) {
                             extraScript += ` Weil ${playerToKill.name} gestorben ist, sind alle Sonderfähigkeiten im Dorf in der nächsten Nacht blockiert.`;
                         } else if (gameConfig.rules?.revealRoleOnDeath !== false) {
@@ -2084,14 +2192,14 @@
                     if (gameConfig.rules?.tieNoExecution) {
                         const msg = `Gleichstand zwischen: ${playerNames}. Niemand wird gehenkt.`;
                         this.logToGame(msg, "text-yellow-400");
-                        UIElements.narratorText.innerHTML = `<strong class="text-yellow-400">${msg}</strong>`;
+                        UIManager.setNarratorText(`<strong class="text-yellow-400">${msg}</strong>`);
                         UIManager.setMainScript(`Es steht ${mostVotedPlayers.length === 2 ? 'ein Gleichstand' : 'ein Gleichstand'} zwischen ${playerNames}. Da sich das Dorf nicht einig wurde, bleibt heute jeder verschont.`);
                         this.forceNight();
                         return;
                     }
                     const msg = `Gleichstand zwischen: ${playerNames}. Eine Neuwahl ist erforderlich.`;
                     this.logToGame(msg, "text-yellow-400");
-                    UIElements.narratorText.innerHTML = `<strong class="text-yellow-400">${msg}</strong>`;
+                    UIManager.setNarratorText(`<strong class="text-yellow-400">${msg}</strong>`);
                     UIManager.setMainScript(`Es steht ein Gleichstand zwischen ${playerNames}. Das Dorf muss erneut abstimmen, um eine Entscheidung zu finden.`);
                 }
             },
@@ -2099,7 +2207,7 @@
             handleTie() {
                 const msg = "Neuwahl wurde ausgerufen. Alle Stimmen zurückgesetzt.";
                 this.logToGame(msg, "text-yellow-400");
-                UIElements.narratorText.innerHTML = `<strong class="text-yellow-400">${msg}</strong>`;
+                UIManager.setNarratorText(`<strong class="text-yellow-400">${msg}</strong>`);
                 UIManager.setMainScript('Da es einen Gleichstand gab, stimmt das Dorf erneut ab. Überlegt euch gut, wer verdächtig ist.');
                 players.filter(p => p.isAlive).forEach(p => { narratorState.votes[p.id] = 0; });
                 UIManager.renderPlayerStatus();
@@ -2111,7 +2219,7 @@
                 gameState.currentPhase = 'night-start';
                 UIElements.dayPhaseControls.classList.add('hidden');
                 UIElements.startNightBtn.classList.remove('hidden');
-                UIElements.narratorText.innerHTML = "Die Abstimmung ist beendet. Bereit für die Nacht.";
+                UIManager.setNarratorText("Die Abstimmung ist beendet. Bereit für die Nacht.");
                 UIManager.renderPlayerStatus();
             },
             
@@ -2195,7 +2303,7 @@
                 UIElements.dayPhaseControls.classList.add('hidden');
                 UIElements.backToMenuBtn.classList.remove('hidden');
 
-                UIElements.narratorText.innerHTML = "Rückblick auf das letzte Spiel";
+                UIManager.setNarratorText("Rückblick auf das letzte Spiel");
                 UIElements.gameLog.innerHTML = lastGameState.gameLogHTML;
                 UIManager.renderPlayerStatus(lastGameState.players, true);
             },
